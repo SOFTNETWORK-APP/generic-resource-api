@@ -31,7 +31,7 @@ protected[resource] trait GenericResourceProvider[Resource <: GenericResource]
     *   - the document to update
     * @param upsert
     *   - whether or not to create the underlying document if it does not exist in the external
-    *   system
+    *     system
     * @param t
     *   - implicit ClassTag for T
     * @return
