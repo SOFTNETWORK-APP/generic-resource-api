@@ -109,7 +109,7 @@ trait GenericResourceService
             }
           } ~
           delete {
-            run(session.id, DeleteResource(s"${session.id}#$uuid")) completeWith {
+            run(s"${session.id}#$uuid", DeleteResource(s"${session.id}#$uuid")) completeWith {
               case ResourceDeleted  => complete(HttpResponse(StatusCodes.OK))
               case ResourceNotFound => complete(HttpResponse(StatusCodes.NotFound))
               case r: ResourceError => complete(HttpResponse(StatusCodes.BadRequest, entity = r))
