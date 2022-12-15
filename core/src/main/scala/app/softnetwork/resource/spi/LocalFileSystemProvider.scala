@@ -13,6 +13,8 @@ import app.softnetwork.utils.{Base64Tools, ImageTools, MimeTypeTools}
 import com.typesafe.scalalogging.StrictLogging
 
 import java.nio.file.{Files, LinkOption, Path, Paths}
+import java.util.stream.Collectors
+import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
@@ -154,8 +156,6 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
   override def listResources(uri: String): List[SimpleResource] = {
     Try {
       val dir = Paths.get(rootDir, LibraryDirectory, uri)
-      import java.util.stream.Collectors
-      import scala.collection.JavaConverters._
       Files
         .list(dir)
         .filter(path =>

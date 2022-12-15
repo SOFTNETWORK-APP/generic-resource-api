@@ -5,6 +5,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.StrictLogging
 import configs.Configs
 
+import scala.collection.JavaConverters._
+
 object ResourceSettings extends StrictLogging {
 
   lazy val config: Config = ConfigFactory.load()
@@ -18,8 +20,6 @@ object ResourceSettings extends StrictLogging {
   val ResourceDirectory: String = config.getString("resource.directory")
 
   val LibraryDirectory: String = config.getString("resource.library-directory")
-
-  import scala.collection.JavaConverters._
 
   val ImageSizes: Map[String, ImageSize] = config
     .getStringList("resource.images.sizes")
