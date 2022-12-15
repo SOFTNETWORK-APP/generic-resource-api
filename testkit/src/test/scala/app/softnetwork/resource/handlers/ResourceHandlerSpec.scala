@@ -26,9 +26,9 @@ class ResourceHandlerSpec
 
   implicit lazy val system: ActorSystem[_] = typedSystem()
 
-  var _bytes: Array[Byte] = _
+  var bytes: Array[Byte] = _
 
-  var _md5: String = _
+  var md5: String = _
 
   val uri: Option[String] = Some("/resources")
 
@@ -36,10 +36,10 @@ class ResourceHandlerSpec
     super.beforeAll()
     val path =
       Paths.get(Thread.currentThread().getContextClassLoader.getResource("avatar.png").getPath)
-    _bytes = Files.readAllBytes(path)
-    _md5 = HashTools
+    bytes = Files.readAllBytes(path)
+    md5 = HashTools
       .hashStream(
-        new ByteArrayInputStream(_bytes)
+        new ByteArrayInputStream(bytes)
       )
       .getOrElse("")
     val dir = new Directory(new File(rootDir))
@@ -79,7 +79,7 @@ class ResourceHandlerSpec
           assert(Files.exists(Paths.get(s"$rootDir${uri.getOrElse("")}/load")))
           ?("load", LoadResource("load")) await {
             case r: ResourceLoaded =>
-              r.resource.md5 shouldBe _md5
+              r.resource.md5 shouldBe md5
               for (size <- ImageSizes.values) {
                 loadResource("load", uri, None, Seq(SizeOption(size)): _*) match {
                   case Some(_) =>
@@ -140,9 +140,9 @@ class ResourceHandlerSpec
     ?(
       entityId,
       if (update) {
-        UpdateResource(entityId, _bytes, uri)
+        UpdateResource(entityId, bytes, uri)
       } else {
-        CreateResource(entityId, _bytes, uri)
+        CreateResource(entityId, bytes, uri)
       }
     )
   }

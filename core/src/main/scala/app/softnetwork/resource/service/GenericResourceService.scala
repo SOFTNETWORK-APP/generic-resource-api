@@ -13,7 +13,7 @@ import app.softnetwork.resource.handlers.{GenericResourceHandler, ResourceHandle
 import app.softnetwork.resource.message.ResourceMessages._
 import com.softwaremill.session.CsrfDirectives._
 import com.softwaremill.session.CsrfOptions._
-import org.softnetwork.session.model.Session
+import org.softnetwork.session.model.Session._
 import app.softnetwork.persistence.service.Service
 import app.softnetwork.resource.spi._
 import app.softnetwork.serialization.commonFormats
@@ -37,8 +37,6 @@ trait GenericResourceService
   implicit def serialization: Serialization.type = jackson.Serialization
 
   implicit def formats: Formats = commonFormats
-
-  import Session._
 
   val route: Route = {
     pathPrefix(ResourceSettings.ResourcePath) {
