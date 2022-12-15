@@ -125,8 +125,6 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
   override def deleteResource(uuid: String, uri: Option[String] = None): Boolean = {
     Try {
       val dir = Paths.get(rootDir, uri.getOrElse(""))
-      import java.util.stream.Collectors
-      import scala.collection.JavaConverters._
       val listFiles: List[Path] =
         Files
           .list(dir)
