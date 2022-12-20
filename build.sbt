@@ -31,7 +31,7 @@ ThisBuild / organization := "app.softnetwork"
 
 name := "resource"
 
-ThisBuild / version := "0.1.3"
+ThisBuild / version := "0.1.3.1"
 
 ThisBuild / scalaVersion := "2.12.15"
 
@@ -91,4 +91,3 @@ lazy val root = project.in(file("."))
   .aggregate(common, core, testkit, api)
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
-organization := "app.softnetwork.persistence"
