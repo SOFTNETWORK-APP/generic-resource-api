@@ -6,5 +6,7 @@ object Versions {
 
   val server = "0.2.6.2"
 
+  val session = "0.1.0"
+
   val scalatest = "3.1.1"
 }

@@ -7,5 +7,6 @@ organization := "app.softnetwork.resource"
 name := "resource-testkit"
 
 libraryDependencies ++= Seq(
-  "app.softnetwork.persistence" %% "persistence-session-testkit" % Versions.genericPersistence
+  "app.softnetwork.api" %% "generic-server-api-testkit" % Versions.server,
+  "app.softnetwork.session" %% "session-testkit" % Versions.session
 )

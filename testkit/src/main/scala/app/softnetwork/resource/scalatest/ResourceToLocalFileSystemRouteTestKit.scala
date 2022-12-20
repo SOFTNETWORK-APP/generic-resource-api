@@ -5,7 +5,7 @@ import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, Multipart, StatusCodes}
 import akka.http.scaladsl.server.Route
-import app.softnetwork.api.server.config.Settings.RootPath
+import app.softnetwork.api.server.config.ServerSettings.RootPath
 import app.softnetwork.persistence.environment
 import app.softnetwork.resource.config.ResourceSettings.{ResourceDirectory, ResourcePath}
 import app.softnetwork.resource.message.ResourceEvents.{
