@@ -28,5 +28,5 @@ organization := "app.softnetwork.resource"
 name := "resource-api"
 
 libraryDependencies ++= Seq(
-  "app.softnetwork.persistence" %% "persistence-jdbc" % Versions.genericPersistence
+  "app.softnetwork.persistence" %% "akka-persistence-jdbc" % Versions.genericPersistence
 )
