@@ -154,6 +154,12 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
   override def listResources(uri: String): List[SimpleResource] = {
     Try {
       val dir = Paths.get(rootDir, LibraryDirectory, uri)
+      if (!Files.exists(dir)) {
+        Try(Files.createDirectories(dir)) match {
+          case Success(_) => logger.info(s"$dir created successfully")
+          case Failure(f) => logger.error(s"$dir can not be created -> ${f.getMessage}", f)
+        }
+      }
       Files
         .list(dir)
         .filter(path =>

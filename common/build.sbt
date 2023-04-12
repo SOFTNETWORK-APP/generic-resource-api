@@ -6,7 +6,7 @@ name := "resource-common"
 
 libraryDependencies ++= Seq(
   "app.softnetwork.api" %% "generic-server-api" % Versions.server,
-  "app.softnetwork.protobuf" %% "scalapb-extensions" % "0.1.5"
+  "app.softnetwork.protobuf" %% "scalapb-extensions" % "0.1.6"
 )
 
 Compile / unmanagedResourceDirectories += baseDirectory.value / "src/main/protobuf"
