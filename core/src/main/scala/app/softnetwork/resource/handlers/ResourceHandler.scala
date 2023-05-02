@@ -5,7 +5,6 @@ import app.softnetwork.persistence.typed.scaladsl.EntityPattern
 import app.softnetwork.resource.message.ResourceMessages._
 import app.softnetwork.resource.persistence.typed.ResourceBehavior
 import app.softnetwork.persistence.typed.CommandTypeKey
-import app.softnetwork.resource.spi.LocalFileSystemProvider
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag

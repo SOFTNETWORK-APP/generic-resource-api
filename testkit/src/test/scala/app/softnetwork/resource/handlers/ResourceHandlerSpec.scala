@@ -11,6 +11,7 @@ import app.softnetwork.resource.message.ResourceEvents._
 import app.softnetwork.resource.scalatest.ResourceToLocalFileSystemTestKit
 import app.softnetwork.resource.spi.{LocalFileSystemProvider, SizeOption}
 import app.softnetwork.resource.utils.ResourceTools
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.nio.file.{Files, Paths}
 import scala.concurrent.Future
@@ -23,6 +24,8 @@ class ResourceHandlerSpec
     with LocalFileSystemProvider
     with AnyWordSpecLike
     with ResourceToLocalFileSystemTestKit {
+
+  lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   implicit lazy val system: ActorSystem[_] = typedSystem()
 

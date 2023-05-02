@@ -15,6 +15,7 @@ import app.softnetwork.utils.{Base64Tools, HashTools}
 import org.apache.tika.Tika
 
 import java.io.ByteArrayInputStream
+import java.time.Instant
 import scala.util.{Failure, Success, Try}
 
 /** Created by smanciot on 30/04/2020.
@@ -75,7 +76,7 @@ sealed trait ResourceBehavior
 
       case cmd: CreateResource =>
         import cmd._
-        val createdDate = now()
+        val createdDate = Instant.now()
         Effect
           .persist(
             ResourceCreatedEvent(
@@ -88,11 +89,11 @@ sealed trait ResourceBehavior
 
       case cmd: UpdateResource =>
         import cmd._
-        val lastUpdated = now()
+        val lastUpdated = Instant.now()
         val createdDate = {
           state match {
             case Some(resource) => resource.createdDate
-            case None           => now()
+            case None           => Instant.now()
           }
         }
         Effect

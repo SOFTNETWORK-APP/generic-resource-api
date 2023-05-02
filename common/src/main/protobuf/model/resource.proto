@@ -26,8 +26,8 @@ message Resource {
     option (scalapb.message).extends = "ProtobufDomainObject";
     option (scalapb.message).extends = "GenericResource";
     required string uuid = 1;
-    required google.protobuf.Timestamp createdDate = 2 [(scalapb.field).type = "java.util.Date"];
-    required google.protobuf.Timestamp lastUpdated = 3 [(scalapb.field).type = "java.util.Date"];
+    required google.protobuf.Timestamp createdDate = 2 [(scalapb.field).type = "java.time.Instant"];
+    required google.protobuf.Timestamp lastUpdated = 3 [(scalapb.field).type = "java.time.Instant"];
     required string content = 4;
     required string md5 = 5;
     optional string mimetype = 6;

@@ -1,8 +1,6 @@
 package app.softnetwork.resource.api
 
 import akka.actor.typed.ActorSystem
-import app.softnetwork.persistence.jdbc.query.JdbcSchema.SchemaType
-import app.softnetwork.persistence.jdbc.query.JdbcSchemaProvider
 import app.softnetwork.persistence.launch.PersistentEntity
 import app.softnetwork.persistence.launch.PersistenceGuardian._
 import app.softnetwork.resource.launch.GenericResourceApplication
@@ -11,8 +9,7 @@ import app.softnetwork.resource.message.ResourceMessages.{ResourceCommand, Resou
 import app.softnetwork.resource.model.Resource
 import app.softnetwork.resource.persistence.typed.ResourceBehavior
 
-trait ResourceApi extends GenericResourceApplication[Resource] with JdbcSchemaProvider {
-  def jdbcSchemaType: SchemaType = this.schemaType
+trait ResourceApi extends GenericResourceApplication[Resource] {
 
   override def resourceEntity
     : ActorSystem[_] => PersistentEntity[ResourceCommand, Resource, ResourceEvent, ResourceResult] =

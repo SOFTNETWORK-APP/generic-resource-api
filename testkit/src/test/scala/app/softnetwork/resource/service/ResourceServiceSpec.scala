@@ -2,12 +2,15 @@ package app.softnetwork.resource.service
 
 import app.softnetwork.resource.scalatest.ResourceToLocalFileSystemRouteTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.io.File
 import java.nio.file.{Path, Paths}
 import scala.reflect.io.Directory
 
 class ResourceServiceSpec extends AnyWordSpecLike with ResourceToLocalFileSystemRouteTestKit {
+
+  lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   val sessionId = "session"
 

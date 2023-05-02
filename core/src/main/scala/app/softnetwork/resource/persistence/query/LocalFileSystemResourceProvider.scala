@@ -48,8 +48,8 @@ protected[resource] trait LocalFileSystemResourceProvider
             .withUuid(uuid)
             .withContent(content)
             .withMd5(md5)
-            .withCreatedDate(new Date(fileAttributes.creationTime().toMillis))
-            .withLastUpdated(new Date(fileAttributes.lastModifiedTime().toMillis))
+            .withCreatedDate(fileAttributes.creationTime().toInstant)
+            .withLastUpdated(fileAttributes.lastModifiedTime().toInstant)
             .copy(mimetype = MimeTypeTools.detectMimeType(path))
         )
       } else {

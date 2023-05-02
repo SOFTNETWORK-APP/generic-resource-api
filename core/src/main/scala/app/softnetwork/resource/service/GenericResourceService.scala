@@ -22,6 +22,7 @@ import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s.{jackson, Formats}
 import org.json4s.jackson.Serialization
+import org.slf4j.{Logger, LoggerFactory}
 
 /** Created by smanciot on 13/05/2020.
   */
@@ -188,5 +189,6 @@ object LocalFileSystemResourceService {
   def apply(aSystem: ActorSystem[_]): LocalFileSystemResourceService =
     new LocalFileSystemResourceService {
       override implicit def system: ActorSystem[_] = aSystem
+      lazy val log: Logger = LoggerFactory getLogger getClass.getName
     }
 }
