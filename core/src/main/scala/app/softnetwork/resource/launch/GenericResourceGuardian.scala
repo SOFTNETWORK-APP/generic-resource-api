@@ -3,6 +3,7 @@ package app.softnetwork.resource.launch
 import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence.launch.{PersistenceGuardian, PersistentEntity}
 import app.softnetwork.persistence.query.EventProcessorStream
+import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.persistence.typed.Singleton
 import app.softnetwork.resource.message.ResourceEvents.ResourceEvent
 import app.softnetwork.resource.message.ResourceMessages.{ResourceCommand, ResourceResult}
@@ -12,7 +13,7 @@ import com.typesafe.scalalogging.StrictLogging
 
 trait GenericResourceGuardian[Resource <: GenericResource]
     extends PersistenceGuardian
-    with StrictLogging {
+    with StrictLogging { _: SchemaProvider =>
 
   def resourceEntity
     : ActorSystem[_] => PersistentEntity[ResourceCommand, Resource, ResourceEvent, ResourceResult]
