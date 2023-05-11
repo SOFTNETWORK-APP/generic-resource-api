@@ -2,7 +2,7 @@ package app.softnetwork.resource.api
 
 import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence.jdbc.query.{JdbcJournalProvider, JdbcOffsetProvider}
-import app.softnetwork.persistence.jdbc.schema.JdbcSchemaProvider
+import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.resource.model.Resource
 import app.softnetwork.resource.persistence.query.{
   GenericResourceToExternalProcessorStream,
@@ -11,7 +11,7 @@ import app.softnetwork.resource.persistence.query.{
 import app.softnetwork.resource.service.{GenericResourceService, LocalFileSystemResourceService}
 import com.typesafe.config.Config
 
-trait ResourceToLocalFileSystemApi extends ResourceApi with JdbcSchemaProvider {
+trait ResourceToLocalFileSystemApi extends ResourceApi { _: SchemaProvider =>
   override def resourceToExternalProcessorStream
     : ActorSystem[_] => GenericResourceToExternalProcessorStream[Resource] =
     sys =>

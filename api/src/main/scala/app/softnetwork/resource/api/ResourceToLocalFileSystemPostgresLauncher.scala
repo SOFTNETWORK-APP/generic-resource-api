@@ -1,11 +1,22 @@
 package app.softnetwork.resource.api
 
-import app.softnetwork.persistence.jdbc.schema.JdbcSchemaTypes.Postgres
-import app.softnetwork.persistence.schema.SchemaType
+import akka.actor
+import akka.actor.typed.ActorSystem
+import app.softnetwork.persistence.jdbc.schema.{JdbcSchema, JdbcSchemaTypes}
+import app.softnetwork.persistence.schema.{Schema, SchemaProvider, SchemaType}
+import app.softnetwork.persistence.typed._
+import com.typesafe.config.Config
 import org.slf4j.{Logger, LoggerFactory}
 
-object ResourceToLocalFileSystemPostgresLauncher extends ResourceToLocalFileSystemApi {
+object ResourceToLocalFileSystemPostgresLauncher
+    extends ResourceToLocalFileSystemApi
+    with SchemaProvider {
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
-  override val schemaType: SchemaType = Postgres
+  override def schema: ActorSystem[_] => Schema = sys =>
+    new JdbcSchema {
+      override def schemaType: SchemaType = JdbcSchemaTypes.Postgres
+      override implicit def classicSystem: actor.ActorSystem = sys
+      override def config: Config = ResourceToLocalFileSystemPostgresLauncher.this.config
+    }
 }
