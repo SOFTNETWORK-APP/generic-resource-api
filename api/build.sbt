@@ -1,7 +1,7 @@
 import app.softnetwork.sbt.build._
 import com.typesafe.sbt.packager.docker._
 
-Compile / mainClass := Some("app.softnetwork.resource.api.ResourceToLocalFileSystemPostgresLauncher")
+Compile / mainClass := Some("app.softnetwork.resource.api.ResourceToLocalFileSystemEndpointsWithOneOffCookiePostgresLauncher")
 
 dockerBaseImage := "openjdk:8"
 
@@ -28,6 +28,5 @@ organization := "app.softnetwork.resource"
 name := "resource-api"
 
 libraryDependencies ++= Seq(
-  "app.softnetwork.persistence" %% "persistence-jdbc" % Versions.genericPersistence,
-  "com.lightbend.akka" %% "akka-persistence-jdbc" % Versions.akkaPersistenceJdbc
+  "app.softnetwork.persistence" %% "persistence-jdbc" % Versions.genericPersistence
 )

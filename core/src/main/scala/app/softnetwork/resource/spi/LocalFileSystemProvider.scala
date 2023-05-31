@@ -22,6 +22,8 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
 
   lazy val rootDir = s"$ResourceDirectory/$environment"
 
+  def strictUri(uri: String): String = uri.split("\\.\\.").mkString("").split("//").mkString("/")
+
   /** Upsert the underlying resource referenced by its uuid to the resource provider
     *
     * @param uuid
@@ -43,7 +45,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
         }
       }
       val decoded = Base64Tools.decodeBase64(data)
-      val path = Paths.get(rootDir, uri.getOrElse(""), uuid)
+      val path = Paths.get(rootDir, uri.map(strictUri).getOrElse(""), uuid)
       val fos = Files.newOutputStream(path)
       fos.write(decoded)
       fos.close()
@@ -75,7 +77,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
     content: Option[String],
     option: ResourceOption*
   ): Option[Path] = {
-    val path = Paths.get(rootDir, uri.getOrElse(""), uuid)
+    val path = Paths.get(rootDir, uri.map(strictUri).getOrElse(""), uuid)
     if (Files.exists(path)) {
       if (ImageTools.isAnImage(path)) {
         val size: Option[ResourceOption] = option.find {
@@ -124,7 +126,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
     */
   override def deleteResource(uuid: String, uri: Option[String] = None): Boolean = {
     Try {
-      val dir = Paths.get(rootDir, uri.getOrElse(""))
+      val dir = Paths.get(rootDir, uri.map(strictUri).getOrElse(""))
       val listFiles: List[Path] =
         Files
           .list(dir)
@@ -153,7 +155,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
     */
   override def listResources(uri: String): List[SimpleResource] = {
     Try {
-      val dir = Paths.get(rootDir, LibraryDirectory, uri)
+      val dir = Paths.get(rootDir, LibraryDirectory, strictUri(uri))
       if (!Files.exists(dir)) {
         Try(Files.createDirectories(dir)) match {
           case Success(_) => logger.info(s"$dir created successfully")

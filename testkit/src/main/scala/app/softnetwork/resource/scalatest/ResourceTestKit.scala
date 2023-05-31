@@ -2,12 +2,12 @@ package app.softnetwork.resource.scalatest
 
 import app.softnetwork.persistence.scalatest.InMemoryPersistenceTestKit
 import app.softnetwork.resource.config.ResourceSettings
-import app.softnetwork.resource.launch.GenericResourceGuardian
+import app.softnetwork.resource.launch.ResourceGuardian
 import app.softnetwork.resource.model.GenericResource
 import org.scalatest.Suite
 
-trait GenericResourceTestKit[Resource <: GenericResource]
-    extends GenericResourceGuardian[Resource]
+trait ResourceTestKit[Resource <: GenericResource]
+    extends ResourceGuardian[Resource]
     with InMemoryPersistenceTestKit { _: Suite =>
 
   /** @return

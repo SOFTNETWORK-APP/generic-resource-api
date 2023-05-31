@@ -8,7 +8,7 @@ import app.softnetwork.resource.persistence.query.{
   GenericResourceToExternalProcessorStream,
   ResourceToLocalFileSystemProcessorStream
 }
-import app.softnetwork.resource.service.{GenericResourceService, LocalFileSystemResourceService}
+import app.softnetwork.resource.service.{LocalFileSystemResourceService, ResourceService}
 import com.typesafe.config.Config
 
 trait ResourceToLocalFileSystemApi extends ResourceApi { _: SchemaProvider =>
@@ -21,7 +21,4 @@ trait ResourceToLocalFileSystemApi extends ResourceApi { _: SchemaProvider =>
         override implicit def system: ActorSystem[_] = sys
         override def config: Config = ResourceToLocalFileSystemApi.this.config
       }
-
-  override def resourceService: ActorSystem[_] => GenericResourceService = sys =>
-    LocalFileSystemResourceService(sys)
 }

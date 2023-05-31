@@ -5,13 +5,16 @@ import akka.http.scaladsl.server.Route
 import app.softnetwork.api.server.ApiRoutes
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.resource.model.GenericResource
-import app.softnetwork.resource.service.GenericResourceService
+import app.softnetwork.resource.service.ResourceService
+import app.softnetwork.session.service.SessionService
 
-trait GenericResourceRoutes[Resource <: GenericResource]
+trait ResourceRoutes[Resource <: GenericResource]
     extends ApiRoutes
-    with GenericResourceGuardian[Resource] { _: SchemaProvider =>
+    with ResourceGuardian[Resource] { _: SchemaProvider =>
 
-  def resourceService: ActorSystem[_] => GenericResourceService
+  def sessionService: ActorSystem[_] => SessionService
+
+  def resourceService: ActorSystem[_] => ResourceService
 
   override def apiRoutes(system: ActorSystem[_]): Route = resourceService(system).route
 

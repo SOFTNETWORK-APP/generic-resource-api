@@ -11,9 +11,8 @@ import app.softnetwork.resource.model.GenericResource
 import app.softnetwork.resource.persistence.query.GenericResourceToExternalProcessorStream
 import com.typesafe.scalalogging.StrictLogging
 
-trait GenericResourceGuardian[Resource <: GenericResource]
-    extends PersistenceGuardian
-    with StrictLogging { _: SchemaProvider =>
+trait ResourceGuardian[Resource <: GenericResource] extends PersistenceGuardian with StrictLogging {
+  _: SchemaProvider =>
 
   def resourceEntity
     : ActorSystem[_] => PersistentEntity[ResourceCommand, Resource, ResourceEvent, ResourceResult]

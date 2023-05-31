@@ -5,6 +5,7 @@ import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, Multipart, StatusCodes}
 import akka.http.scaladsl.server.Route
+import app.softnetwork.api.server.ApiRoutes
 import app.softnetwork.api.server.config.ServerSettings.RootPath
 import app.softnetwork.persistence.environment
 import app.softnetwork.resource.config.ResourceSettings.{ResourceDirectory, ResourcePath}
@@ -15,23 +16,16 @@ import app.softnetwork.resource.message.ResourceEvents.{
   ResourceUpdatedEvent
 }
 import app.softnetwork.resource.model.Resource
-import app.softnetwork.resource.service.{GenericResourceService, LocalFileSystemResourceService}
+import app.softnetwork.resource.service.{LocalFileSystemResourceService, ResourceService}
 import app.softnetwork.session.scalatest.SessionServiceRoute
-import org.scalatest.{Assertion, Suite}
+import org.scalatest.Suite
 
 import java.net.URLEncoder
 import java.nio.file.{Files, Path, Paths}
 
 trait ResourceToLocalFileSystemRouteTestKit
-    extends GenericResourceRouteTestKit[Resource]
-    with ResourceToLocalFileSystemTestKit { _: Suite =>
-
-  override def resourceService: ActorSystem[_] => GenericResourceService = system =>
-    LocalFileSystemResourceService(system)
-
-  override def apiRoutes(system: ActorSystem[_]): Route =
-    resourceService(system).route ~
-    SessionServiceRoute(system).route
+    extends ResourceRouteTestKit[Resource]
+    with ResourceToLocalFileSystemTestKit { _: Suite with ApiRoutes =>
 
   val probe: TestProbe[ResourceEvent] = createTestProbe[ResourceEvent]()
   subscribeProbe(probe)
@@ -45,12 +39,13 @@ trait ResourceToLocalFileSystemRouteTestKit
     uuid: String,
     uri: Option[String] = None,
     update: Boolean = false
-  ): Assertion = {
-    invalidateSession()
-    createSession(sessionId)
+  ): Unit = {
+    if (httpHeaders.isEmpty) {
+      createSession(sessionId)
+    }
     val sessionUuid = s"$sessionId#$uuid"
     val encodedSessionUuid = URLEncoder.encode(sessionUuid, "UTF-8")
-    withCookies(
+    withHeaders(
       (if (update) {
          Put(
            s"/$RootPath/$ResourcePath${uri.getOrElse("")}/$uuid",
@@ -88,43 +83,55 @@ trait ResourceToLocalFileSystemRouteTestKit
         probe.expectMessageType[ResourceCreatedEvent]
       }
       assert(Files.exists(Paths.get(s"$rootDir/$sessionUuid")))
-      Get(s"/$RootPath/$ResourcePath${uri.getOrElse("")}/$encodedSessionUuid") ~> routes ~> check {
+      refreshSession(headers)
+      withHeaders(
+        Get(s"/$RootPath/$ResourcePath${uri.getOrElse("")}/$encodedSessionUuid")
+      ) ~> routes ~> check {
         status shouldEqual StatusCodes.OK
+        refreshSession(headers)
       }
     }
   }
 
-  def deleteResource(sessionId: String, uuid: String, uri: Option[String] = None): Assertion = {
-    invalidateSession()
-    createSession(sessionId)
+  def deleteResource(sessionId: String, uuid: String, uri: Option[String] = None): Unit = {
+    if (httpHeaders.isEmpty) {
+      createSession(sessionId)
+    }
     val sessionUuid = s"$sessionId#$uuid"
     val encodedSessionUuid = URLEncoder.encode(sessionUuid, "UTF-8")
-    withCookies(
+    withHeaders(
       Delete(s"/$RootPath/$ResourcePath${uri.getOrElse("")}/$uuid")
     ) ~> routes ~> check {
       status shouldEqual StatusCodes.OK
       probe.expectMessageType[ResourceDeletedEvent]
       assert(!Files.exists(Paths.get(s"$rootDir/$sessionUuid")))
-      Get(s"/$RootPath/$ResourcePath${uri.getOrElse("")}/$encodedSessionUuid") ~> routes ~> check {
+      refreshSession(headers)
+      withHeaders(
+        Get(s"/$RootPath/$ResourcePath${uri.getOrElse("")}/$encodedSessionUuid")
+      ) ~> routes ~> check {
         status shouldEqual StatusCodes.NotFound
+        refreshSession(headers)
       }
     }
   }
 
-  def addImage(path: Path, sessionId: String, uuid: String, update: Boolean = false): Assertion = {
+  def addImage(path: Path, sessionId: String, uuid: String, update: Boolean = false): Unit = {
     addResource(path, "picture", sessionId, uuid, Some("/images"), update)
   }
 
-  def getImage(uuid: String, size: Option[String] = None): Assertion = {
+  def getImage(uuid: String, size: Option[String] = None): Unit = {
     val encodedUuid = URLEncoder.encode(uuid, "UTF-8")
-    Get(
-      s"/$RootPath/$ResourcePath/images/$encodedUuid${size.map("/" + _).getOrElse("")}"
+    withHeaders(
+      Get(
+        s"/$RootPath/$ResourcePath/images/$encodedUuid${size.map("/" + _).getOrElse("")}"
+      )
     ) ~> routes ~> check {
       status shouldEqual StatusCodes.OK
+      refreshSession(headers)
     }
   }
 
-  def deleteImage(sessionId: String, uuid: String): Assertion = {
+  def deleteImage(sessionId: String, uuid: String): Unit = {
     deleteResource(sessionId, uuid, Some("/images"))
   }
 }

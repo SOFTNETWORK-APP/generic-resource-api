@@ -7,7 +7,7 @@ import app.softnetwork.resource.spi.{LocalFileSystemProvider, ResourceProvider}
 
 import scala.reflect.ClassTag
 
-protected[resource] trait GenericResourceProvider[Resource <: GenericResource]
+protected[resource] trait ExternalGenericResourceProvider[Resource <: GenericResource]
     extends ExternalPersistenceProvider[Resource] {
   _: ResourceProvider with ManifestWrapper[Resource] =>
 
@@ -83,7 +83,3 @@ protected[resource] trait GenericResourceProvider[Resource <: GenericResource]
   }
 
 }
-
-trait GenericLocalFileSystemResourceProvider[Resource <: GenericResource]
-    extends GenericResourceProvider[Resource]
-    with LocalFileSystemProvider { _: ManifestWrapper[Resource] => }

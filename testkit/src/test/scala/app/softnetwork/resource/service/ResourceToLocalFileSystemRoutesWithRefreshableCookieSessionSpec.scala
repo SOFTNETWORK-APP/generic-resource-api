@@ -1,0 +1,9 @@
+package app.softnetwork.resource.service
+
+import app.softnetwork.resource.scalatest.ResourceToLocalFileSystemRoutesTestKit
+import app.softnetwork.session.scalatest.RefreshableCookieSessionServiceTestKit
+
+class ResourceToLocalFileSystemRoutesWithRefreshableCookieSessionSpec
+    extends ResourceServiceSpec
+    with RefreshableCookieSessionServiceTestKit
+    with ResourceToLocalFileSystemRoutesTestKit

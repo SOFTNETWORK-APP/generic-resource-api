@@ -12,7 +12,7 @@ import java.util.Date
 import scala.util.{Failure, Success, Try}
 
 protected[resource] trait LocalFileSystemResourceProvider
-    extends GenericLocalFileSystemResourceProvider[Resource]
+    extends LocalFileSystemGenericResourceProvider[Resource]
     with ManifestWrapper[Resource] {
 
   override protected val manifestWrapper: ManifestW = ManifestW()
