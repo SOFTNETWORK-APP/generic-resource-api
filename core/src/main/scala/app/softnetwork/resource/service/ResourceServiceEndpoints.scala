@@ -3,13 +3,18 @@ package app.softnetwork.resource.service
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
-import app.softnetwork.api.server.ApiEndpoint
+import app.softnetwork.api.server.{ApiEndpoint, ApiErrors}
 import app.softnetwork.resource.config.ResourceSettings
 import app.softnetwork.resource.handlers.GenericResourceHandler
 import app.softnetwork.resource.message.ResourceMessages._
 import app.softnetwork.resource.spi.{ResourceProvider, SimpleResource}
 import app.softnetwork.session.service.SessionEndpoints
-import org.json4s.Formats
+import com.softwaremill.session.{
+  GetSessionTransport,
+  SetSessionTransport,
+  TapirCsrfCheckMode,
+  TapirSessionContinuity
+}
 import org.softnetwork.session.model.Session
 import sttp.capabilities.akka.AkkaStreams
 import sttp.model.headers.CookieValueWithMeta
@@ -28,50 +33,46 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
 
   import app.softnetwork.serialization._
 
-  implicit def formats: Formats = commonFormats
-
   def sessionEndpoints: SessionEndpoints
 
+  def sc: TapirSessionContinuity[Session] = sessionEndpoints.sc
+
+  def st: SetSessionTransport = sessionEndpoints.st
+
+  def gt: GetSessionTransport = sessionEndpoints.gt
+
+  def checkMode: TapirCsrfCheckMode[Session] = sessionEndpoints.checkMode
+
+  def error(e: ResourceError): ApiErrors.ErrorInfo =
+    e match {
+      case ResourceNotFound => ApiErrors.NotFound(ResourceNotFound)
+      case _                => ApiErrors.BadRequest(e.message)
+    }
+
   def rootEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
+    (Seq[Option[String]], Option[String], Method, Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     Unit,
-    ResourceError,
+    ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
     Any,
     Future
-  ] =
-    sessionEndpoints.antiCsrfWithRequiredSession.endpoint
+  ] = {
+    val partial =
+      sessionEndpoints.antiCsrfWithRequiredSession(sc, gt, checkMode)
+    partial.endpoint
       .in(ResourceSettings.ResourcePath)
-      .out(sessionEndpoints.antiCsrfWithRequiredSession.securityOutput)
-      .errorOut(
-        oneOf[ResourceError](
-          oneOfVariant[ResourceNotFound.type](
-            statusCode(StatusCode.NotFound)
-              .and(emptyOutputAs(ResourceNotFound).description("Resource not found"))
-          ),
-          oneOfVariant[UnauthorizedError.type](
-            statusCode(StatusCode.Unauthorized)
-              .and(emptyOutputAs(UnauthorizedError).description("Unauthorized"))
-          )
-        )
-      )
+      .out(partial.securityOutput)
+      .errorOut(errors)
       .serverSecurityLogic { inputs =>
-        sessionEndpoints.antiCsrfWithRequiredSession.securityLogic(new FutureMonad())(inputs).map {
-          case Left(_)  => Left(UnauthorizedError)
+        partial.securityLogic(new FutureMonad())(inputs).map {
+          case Left(_)  => Left(ApiErrors.Unauthorized("Unauthorized"))
           case Right(r) => Right((r._1, r._2))
         }
       }
+  }
 
-  val libraryEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    List[String],
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta], List[SimpleResource]),
-    Any,
-    Future
-  ] =
+  val libraryEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint.get
       .in("library")
       .in(paths)
@@ -86,24 +87,16 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
   def loadResourceBusinessLogic(
     principal: ((Seq[Option[String]], Option[CookieValueWithMeta]), Session)
   ): List[String] => Either[
-    ResourceError,
+    ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta], Source[ByteString, Any])
   ] =
     segments =>
       loadResource(segments) match {
         case Some((path, _)) => Right((principal._1._1, principal._1._2, FileIO.fromPath(path)))
-        case _               => Left(ResourceNotFound)
+        case _               => Left(error(ResourceNotFound))
       }
 
-  val getResourceEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    List[String],
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta], Source[ByteString, Any]),
-    Any with AkkaStreams,
-    Future
-  ] =
+  val getResourceEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint.get
       .in(paths)
       .out(streamBinaryBody(AkkaStreams)(CodecFormat.OctetStream()))
@@ -111,15 +104,7 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         segments => Future.successful(loadResourceBusinessLogic(principal)(segments))
       )
 
-  val getImageEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    List[String],
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta], Source[ByteString, Any]),
-    Any with AkkaStreams,
-    Future
-  ] =
+  val getImageEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint.get
       .in("images")
       .in(paths)
@@ -131,12 +116,12 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
       )
 
   val uploadResourceEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
+    (Seq[Option[String]], Option[String], Method, Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     (List[String], UploadResource),
-    ResourceError,
+    ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta], ResourceResult),
-    Any,
+    Any with AkkaStreams,
     Future
   ] =
     rootEndpoint
@@ -155,47 +140,31 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         )
       )
 
-  val addResourceEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    (List[String], UploadResource),
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta], ResourceResult),
-    Any,
-    Future
-  ] =
+  val addResourceEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     uploadResourceEndpoint.post
       .description("Add a resource")
       .serverLogic(principal => { case (segments, upload) =>
         uploadResource(principal._2, segments, upload.bytes, update = false) map {
-          case Left(l)  => Left(l)
+          case Left(l)  => Left(error(l))
           case Right(r) => Right((principal._1._1, principal._1._2, r))
         }
       })
 
-  val updateResourceEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    (List[String], UploadResource),
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta], ResourceResult),
-    Any,
-    Future
-  ] =
+  val updateResourceEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     uploadResourceEndpoint.put
       .description("Update the resource")
       .serverLogic(principal => { case (segments, upload) =>
         uploadResource(principal._2, segments, upload.bytes, update = true) map {
-          case Left(l)  => Left(l)
+          case Left(l)  => Left(error(l))
           case Right(r) => Right((principal._1._1, principal._1._2, r))
         }
       })
 
   val uploadImageEndpoint: PartialServerEndpoint[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
+    (Seq[Option[String]], Option[String], Method, Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
     (List[String], UploadImage),
-    ResourceError,
+    ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta], ResourceResult),
     Any,
     Future
@@ -217,38 +186,22 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         )
       )
 
-  val addImageEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    (List[String], UploadImage),
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta], ResourceResult),
-    Any,
-    Future
-  ] =
+  val addImageEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     uploadImageEndpoint.post
       .description("Add an image")
       .serverLogic(principal => { case (segments, upload) =>
         uploadResource(principal._2, segments, upload.bytes, update = false) map {
-          case Left(l)  => Left(l)
+          case Left(l)  => Left(error(l))
           case Right(r) => Right((principal._1._1, principal._1._2, r))
         }
       })
 
-  val updateImageEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    (List[String], UploadImage),
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta], ResourceResult),
-    Any,
-    Future
-  ] =
+  val updateImageEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     uploadImageEndpoint.put
       .description("Update the image")
       .serverLogic(principal => { case (segments, upload) =>
         uploadResource(principal._2, segments, upload.bytes, update = true) map {
-          case Left(l)  => Left(l)
+          case Left(l)  => Left(error(l))
           case Right(r) => Right((principal._1._1, principal._1._2, r))
         }
       })
@@ -264,35 +217,19 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
     }
   }
 
-  val deleteResourceEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    List[String],
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta]),
-    Any,
-    Future
-  ] =
+  val deleteResourceEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint
       .in(paths)
       .delete
       .serverLogic(principal =>
         segments =>
           deleteResourceBusinessLogic(principal._2, segments) map {
-            case Left(l)  => Left(l)
+            case Left(l)  => Left(error(l))
             case Right(_) => Right((principal._1._1, principal._1._2))
           }
       )
 
-  val deleteImageEndpoint: Full[
-    (Seq[Option[String]], Method, Option[String], Option[String]),
-    ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    List[String],
-    ResourceError,
-    (Seq[Option[String]], Option[CookieValueWithMeta]),
-    Any,
-    Future
-  ] =
+  val deleteImageEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint
       .in("images")
       .in(paths)
@@ -300,7 +237,7 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
       .serverLogic(principal =>
         segments =>
           deleteResourceBusinessLogic(principal._2, segments) map {
-            case Left(l)  => Left(l)
+            case Left(l)  => Left(error(l))
             case Right(_) => Right((principal._1._1, principal._1._2))
           }
       )

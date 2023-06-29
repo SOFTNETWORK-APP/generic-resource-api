@@ -1,10 +1,8 @@
 package app.softnetwork.resource.scalatest
 
 import akka.actor.testkit.typed.scaladsl.TestProbe
-import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, Multipart, StatusCodes}
-import akka.http.scaladsl.server.Route
 import app.softnetwork.api.server.ApiRoutes
 import app.softnetwork.api.server.config.ServerSettings.RootPath
 import app.softnetwork.persistence.environment
@@ -16,8 +14,6 @@ import app.softnetwork.resource.message.ResourceEvents.{
   ResourceUpdatedEvent
 }
 import app.softnetwork.resource.model.Resource
-import app.softnetwork.resource.service.{LocalFileSystemResourceService, ResourceService}
-import app.softnetwork.session.scalatest.SessionServiceRoute
 import org.scalatest.Suite
 
 import java.net.URLEncoder
