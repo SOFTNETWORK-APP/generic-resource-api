@@ -31,7 +31,8 @@ trait ResourceServiceSpec extends AnyWordSpecLike with ResourceToLocalFileSystem
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    routes
+    // pre load routes
+    apiRoutes(typedSystem())
     val dir = new Directory(new File(rootDir))
     dir.deleteRecursively()
   }

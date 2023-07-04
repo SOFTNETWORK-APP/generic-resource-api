@@ -34,5 +34,4 @@ object ResourceMessages {
 
   case object ResourceNotFound extends ResourceError("ResourceNotFound")
 
-  case object UnauthorizedError extends ResourceError("UnauthorizedError")
 }

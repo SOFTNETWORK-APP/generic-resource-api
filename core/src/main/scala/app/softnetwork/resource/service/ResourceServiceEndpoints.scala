@@ -23,7 +23,6 @@ import sttp.monad.FutureMonad
 import sttp.tapir._
 import sttp.tapir.generic.auto._
 import sttp.tapir.json.json4s.jsonBody
-import sttp.tapir.server.ServerEndpoint.Full
 import sttp.tapir.server.{PartialServerEndpoint, ServerEndpoint}
 
 import scala.concurrent.Future
