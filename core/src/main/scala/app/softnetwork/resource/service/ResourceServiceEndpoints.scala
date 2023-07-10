@@ -71,7 +71,7 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
       }
   }
 
-  val libraryEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
+  val library: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint.get
       .in("library")
       .in(paths)
@@ -95,7 +95,7 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         case _               => Left(error(ResourceNotFound))
       }
 
-  val getResourceEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
+  val getResource: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint.get
       .in(paths)
       .out(streamBinaryBody(AkkaStreams)(CodecFormat.OctetStream()))
@@ -103,7 +103,7 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         segments => Future.successful(loadResourceBusinessLogic(principal)(segments))
       )
 
-  val getImageEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
+  val getImage: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint.get
       .in("images")
       .in(paths)
@@ -114,18 +114,20 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         segments => Future.successful(loadResourceBusinessLogic(principal)(segments))
       )
 
-  val uploadResourceEndpoint: PartialServerEndpoint[
+  def uploadResource[T <: Upload](implicit
+    multipartCodec: MultipartCodec[T]
+  ): PartialServerEndpoint[
     (Seq[Option[String]], Option[String], Method, Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    (List[String], UploadResource),
+    (List[String], T),
     ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta], ResourceResult),
-    Any with AkkaStreams,
+    Any,
     Future
   ] =
     rootEndpoint
       .in(paths.description("URI of the resource"))
-      .in(multipartBody[UploadResource].description("Multipart file to upload"))
+      .in(multipartBody[T].description("Multipart file to upload"))
       .out(
         oneOf[ResourceResult](
           oneOfVariant[ResourceCreated.type](
@@ -139,8 +141,10 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         )
       )
 
-  val addResourceEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
-    uploadResourceEndpoint.post
+  def addResource[T <: Upload](implicit
+    multipartCodec: MultipartCodec[T]
+  ): ServerEndpoint[Any with AkkaStreams, Future] =
+    uploadResource[T].post
       .description("Add a resource")
       .serverLogic(principal => { case (segments, upload) =>
         uploadResource(principal._2, segments, upload.bytes, update = false) map {
@@ -149,8 +153,10 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         }
       })
 
-  val updateResourceEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
-    uploadResourceEndpoint.put
+  def updateResource[T <: Upload](implicit
+    multipartCodec: MultipartCodec[T]
+  ): ServerEndpoint[Any with AkkaStreams, Future] =
+    uploadResource[T].put
       .description("Update the resource")
       .serverLogic(principal => { case (segments, upload) =>
         uploadResource(principal._2, segments, upload.bytes, update = true) map {
@@ -159,10 +165,12 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         }
       })
 
-  val uploadImageEndpoint: PartialServerEndpoint[
+  def uploadImage[T <: Upload](implicit
+    multipartCodec: MultipartCodec[T]
+  ): PartialServerEndpoint[
     (Seq[Option[String]], Option[String], Method, Option[String]),
     ((Seq[Option[String]], Option[CookieValueWithMeta]), Session),
-    (List[String], UploadImage),
+    (List[String], T),
     ApiErrors.ErrorInfo,
     (Seq[Option[String]], Option[CookieValueWithMeta], ResourceResult),
     Any,
@@ -171,7 +179,7 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
     rootEndpoint
       .in("images")
       .in(paths.description("URI of the image"))
-      .in(multipartBody[UploadImage].description("Multipart image to upload"))
+      .in(multipartBody[T].description("Multipart image to upload"))
       .out(
         oneOf[ResourceResult](
           oneOfVariant[ResourceCreated.type](
@@ -185,8 +193,10 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         )
       )
 
-  val addImageEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
-    uploadImageEndpoint.post
+  def addImage[T <: Upload](implicit
+    multipartCodec: MultipartCodec[T]
+  ): ServerEndpoint[Any with AkkaStreams, Future] =
+    uploadImage[T].post
       .description("Add an image")
       .serverLogic(principal => { case (segments, upload) =>
         uploadResource(principal._2, segments, upload.bytes, update = false) map {
@@ -195,8 +205,10 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
         }
       })
 
-  val updateImageEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
-    uploadImageEndpoint.put
+  def updateImage[T <: Upload](implicit
+    multipartCodec: MultipartCodec[T]
+  ): ServerEndpoint[Any with AkkaStreams, Future] =
+    uploadImage[T].put
       .description("Update the image")
       .serverLogic(principal => { case (segments, upload) =>
         uploadResource(principal._2, segments, upload.bytes, update = true) map {
@@ -216,7 +228,7 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
     }
   }
 
-  val deleteResourceEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
+  val deleteResource: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint
       .in(paths)
       .delete
@@ -228,7 +240,7 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
           }
       )
 
-  val deleteImageEndpoint: ServerEndpoint[Any with AkkaStreams, Future] =
+  val deleteImage: ServerEndpoint[Any with AkkaStreams, Future] =
     rootEndpoint
       .in("images")
       .in(paths)
@@ -241,28 +253,22 @@ trait ResourceServiceEndpoints extends LoadResourceService with ApiEndpoint {
           }
       )
 
-  def innerEndpoints: List[ServerEndpoint[Any with AkkaStreams, Future]] = List(
-    libraryEndpoint,
-    getResourceEndpoint,
-    getImageEndpoint
-  )
-
   override def endpoints: List[ServerEndpoint[Any with AkkaStreams, Future]] = List(
-    libraryEndpoint,
-    addImageEndpoint,
-    updateImageEndpoint,
-    getImageEndpoint,
-    deleteImageEndpoint,
-    addResourceEndpoint,
-    updateResourceEndpoint,
-    getResourceEndpoint,
-    deleteResourceEndpoint
+    library,
+    addImage[UploadImage],
+    updateImage[UploadImage],
+    getImage,
+    deleteImage,
+    addResource[UploadResource],
+    updateResource[UploadResource],
+    getResource,
+    deleteResource
   )
 
   lazy val route: Route = apiRoute
 }
 
-trait Upload {
+sealed trait Upload {
   def bytes: Array[Byte]
 }
 

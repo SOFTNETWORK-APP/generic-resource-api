@@ -13,6 +13,12 @@ trait ResourceRouteTestKit[Resource <: GenericResource]
     extends SessionTestKit
     with ResourceTestKit[Resource] { _: Suite with ApiRoutes =>
 
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    // pre load routes
+    apiRoutes(typedSystem())
+  }
+
   def resourceEntities: ActorSystem[_] => Seq[PersistentEntity[_, _, _, _]] = sys =>
     Seq(resourceEntity(sys)) :+ implicitly[PersistentEntity[_, _, _, _]](
       SessionRefreshTokenBehavior
