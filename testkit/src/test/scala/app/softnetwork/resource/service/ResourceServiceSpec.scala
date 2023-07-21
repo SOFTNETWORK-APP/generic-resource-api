@@ -79,5 +79,9 @@ trait ResourceServiceSpec extends AnyWordSpecLike with ResourceToLocalFileSystem
       deleteImage(sessionId, imageUuid)
     }
 
+    "list resources" in {
+      addResource(path, "file", sessionId, resourceUuid, Some("/library/sample"))
+      assert(listResources(Some("/sample")).nonEmpty)
+    }
   }
 }

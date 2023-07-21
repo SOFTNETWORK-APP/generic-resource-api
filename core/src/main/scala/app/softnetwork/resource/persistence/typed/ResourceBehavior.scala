@@ -8,7 +8,7 @@ import app.softnetwork.resource.message.ResourceMessages._
 import app.softnetwork.resource.model.Resource
 
 import scala.language.implicitConversions
-import app.softnetwork.persistence.{now, ManifestWrapper}
+import app.softnetwork.persistence.ManifestWrapper
 import app.softnetwork.persistence.typed._
 import app.softnetwork.resource.config.ResourceSettings
 import app.softnetwork.utils.{Base64Tools, HashTools}

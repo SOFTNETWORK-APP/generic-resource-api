@@ -14,6 +14,7 @@ import app.softnetwork.resource.message.ResourceEvents.{
   ResourceUpdatedEvent
 }
 import app.softnetwork.resource.model.Resource
+import app.softnetwork.resource.spi.SimpleResource
 import org.scalatest.Suite
 
 import java.net.URLEncoder
@@ -78,7 +79,13 @@ trait ResourceToLocalFileSystemRouteTestKit
         status shouldEqual StatusCodes.Created
         probe.expectMessageType[ResourceCreatedEvent]
       }
-      assert(Files.exists(Paths.get(s"$rootDir/$sessionUuid")))
+      var strictUri = uri.getOrElse("")
+      if (strictUri.startsWith("/images")) {
+        strictUri = strictUri.substring(7)
+      }
+      val path = s"$rootDir$strictUri/$sessionUuid"
+      logger.info(path)
+      assert(Files.exists(Paths.get(path)))
       refreshSession(headers)
       withHeaders(
         Get(s"/$RootPath/$ResourcePath${uri.getOrElse("")}/$encodedSessionUuid")
@@ -100,7 +107,13 @@ trait ResourceToLocalFileSystemRouteTestKit
     ) ~> routes ~> check {
       status shouldEqual StatusCodes.OK
       probe.expectMessageType[ResourceDeletedEvent]
-      assert(!Files.exists(Paths.get(s"$rootDir/$sessionUuid")))
+      var strictUri = uri.getOrElse("")
+      if (strictUri.startsWith("/images")) {
+        strictUri = strictUri.substring(7)
+      }
+      val path = s"$rootDir$strictUri/$sessionUuid"
+      logger.info(path)
+      assert(!Files.exists(Paths.get(path)))
       refreshSession(headers)
       withHeaders(
         Get(s"/$RootPath/$ResourcePath${uri.getOrElse("")}/$encodedSessionUuid")
@@ -129,5 +142,15 @@ trait ResourceToLocalFileSystemRouteTestKit
 
   def deleteImage(sessionId: String, uuid: String): Unit = {
     deleteResource(sessionId, uuid, Some("/images"))
+  }
+
+  def listResources(uri: Option[String] = None): List[SimpleResource] = {
+    import app.softnetwork.serialization._
+    withHeaders(
+      Get(s"/$RootPath/$ResourcePath/library${uri.getOrElse("")}")
+    ) ~> routes ~> check {
+      status shouldEqual StatusCodes.OK
+      responseAs[List[SimpleResource]]
+    }
   }
 }
