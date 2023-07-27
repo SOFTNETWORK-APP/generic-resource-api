@@ -1,16 +1,22 @@
 package app.softnetwork.resource.scalatest
 
 import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.server.Route
-import app.softnetwork.resource.service.ResourceService
+import app.softnetwork.api.server.ApiRoute
+import app.softnetwork.persistence.schema.SchemaProvider
+import app.softnetwork.resource.launch.ResourceRoutes
+import app.softnetwork.resource.model.GenericResource
 import app.softnetwork.session.scalatest.SessionServiceRoutes
 import org.scalatest.Suite
 
-trait ResourceRoutesTestKit extends SessionServiceRoutes { _: Suite =>
+trait ResourceRoutesTestKit[Resource <: GenericResource]
+    extends ResourceRoutes[Resource]
+    with SessionServiceRoutes { _: Suite with SchemaProvider =>
 
-  def resourceService: ActorSystem[_] => ResourceService
-
-  override def apiRoutes(system: ActorSystem[_]): Route =
-    sessionServiceRoute(system).route ~ resourceService(system).route
+  override def apiRoutes: ActorSystem[_] => List[ApiRoute] =
+    system =>
+      List(
+        sessionServiceRoute(system),
+        resourceService(system)
+      )
 
 }

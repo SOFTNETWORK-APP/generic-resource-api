@@ -28,7 +28,8 @@ trait ResourceService
     with DefaultComplete
     with Json4sSupport
     with StrictLogging
-    with LoadResourceService {
+    with LoadResourceService
+    with ApiRoute {
   _: GenericResourceHandler with ResourceProvider =>
 
   implicit def serialization: Serialization.type = jackson.Serialization

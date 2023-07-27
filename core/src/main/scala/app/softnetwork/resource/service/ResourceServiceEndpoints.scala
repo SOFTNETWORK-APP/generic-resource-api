@@ -1,6 +1,5 @@
 package app.softnetwork.resource.service
 
-import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
 import app.softnetwork.api.server.ApiErrors
@@ -232,7 +231,6 @@ trait ResourceServiceEndpoints
     deleteResource
   )
 
-  lazy val route: Route = apiRoute
 }
 
 sealed trait Upload {
