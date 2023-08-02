@@ -50,7 +50,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
       fos.write(decoded)
       fos.close()
       if (ImageTools.isAnImage(path)) {
-        ImageTools.generateImages(path, replace = true, ImageSizes.values.toSeq)
+        ImageTools.generateImages(path, ImageSizes.values.toSeq)
       }
     } match {
       case Success(_) => true
@@ -96,8 +96,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
               Some(
                 ImageTools.getImage(
                   path,
-                  Option(imageSize),
-                  replace = false
+                  Option(imageSize)
                 )
               )
             }
