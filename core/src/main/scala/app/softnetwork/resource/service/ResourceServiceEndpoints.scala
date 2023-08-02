@@ -112,7 +112,13 @@ trait ResourceServiceEndpoints
     uploadResource[T].post
       .description("Add a resource")
       .serverLogic(session => { case (segments, upload) =>
-        uploadResource(session, segments, upload.bytes, update = false) map {
+        val resourceDetails: ResourceDetails = segments
+        import resourceDetails._
+        uploadResource(
+          resourceDetails.copy(uuid = s"${session.id}#$uuid"),
+          upload.bytes,
+          update = false
+        ) map {
           case Right(r) => Right(r)
           case Left(l)  => Left(error(l))
         }
@@ -124,7 +130,13 @@ trait ResourceServiceEndpoints
     uploadResource[T].put
       .description("Update the resource")
       .serverLogic(session => { case (segments, upload) =>
-        uploadResource(session, segments, upload.bytes, update = true) map {
+        val resourceDetails: ResourceDetails = segments
+        import resourceDetails._
+        uploadResource(
+          resourceDetails.copy(uuid = s"${session.id}#$uuid"),
+          upload.bytes,
+          update = true
+        ) map {
           case Right(r) => Right(r)
           case Left(l)  => Left(error(l))
         }
@@ -165,7 +177,13 @@ trait ResourceServiceEndpoints
     uploadImage[T].post
       .description("Add an image")
       .serverLogic(session => { case (segments, upload) =>
-        uploadResource(session, segments, upload.bytes, update = false) map {
+        val resourceDetails: ResourceDetails = segments
+        import resourceDetails._
+        uploadResource(
+          resourceDetails.copy(uuid = s"${session.id}#$uuid"),
+          upload.bytes,
+          update = false
+        ) map {
           case Right(r) => Right(r)
           case Left(l)  => Left(error(l))
         }
@@ -177,7 +195,13 @@ trait ResourceServiceEndpoints
     uploadImage[T].put
       .description("Update the image")
       .serverLogic(session => { case (segments, upload) =>
-        uploadResource(session, segments, upload.bytes, update = true) map {
+        val resourceDetails: ResourceDetails = segments
+        import resourceDetails._
+        uploadResource(
+          resourceDetails.copy(uuid = s"${session.id}#$uuid"),
+          upload.bytes,
+          update = true
+        ) map {
           case Right(r) => Right(r)
           case Left(l)  => Left(error(l))
         }

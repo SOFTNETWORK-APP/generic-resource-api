@@ -19,7 +19,6 @@ import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s.{jackson, Formats}
 import org.json4s.jackson.Serialization
-import org.softnetwork.session.model.Session
 
 /** Created by smanciot on 13/05/2020.
   */
@@ -62,10 +61,8 @@ trait ResourceService
 
   def resource(fieldName: String = "file"): Route = {
     path(Segments(1, 128)) { segments =>
-      val resourceDetails: ResourceDetails = segments
-      import resourceDetails._
       get {
-        loadResource(resourceDetails) match {
+        loadResource(segments) match {
           case Some((path, _)) => getFromFile(path.toFile)
           case _               => complete(HttpResponse(StatusCodes.NotFound))
         }
@@ -79,7 +76,13 @@ trait ResourceService
               implicit val materializer: Materializer = ctx.materializer
               fileUpload(fieldName) {
                 case (_, byteSource) =>
-                  completeResource(session, resourceDetails, byteSource, update = false)
+                  val resourceDetails: ResourceDetails = segments
+                  import resourceDetails._
+                  completeResource(
+                    resourceDetails.copy(uuid = s"${session.id}#$uuid"),
+                    byteSource,
+                    update = false
+                  )
                 case _ => complete(HttpResponse(StatusCodes.BadRequest))
               }
             }
@@ -89,12 +92,20 @@ trait ResourceService
               implicit val materializer: Materializer = ctx.materializer
               fileUpload(fieldName) {
                 case (_, byteSource) =>
-                  completeResource(session, resourceDetails, byteSource, update = true)
+                  val resourceDetails: ResourceDetails = segments
+                  import resourceDetails._
+                  completeResource(
+                    resourceDetails.copy(uuid = s"${session.id}#$uuid"),
+                    byteSource,
+                    update = true
+                  )
                 case _ => complete(HttpResponse(StatusCodes.BadRequest))
               }
             }
           } ~
           delete {
+            val resourceDetails: ResourceDetails = segments
+            import resourceDetails._
             run(s"${session.id}#$uuid", DeleteResource(s"${session.id}#$uuid")) completeWith {
               case ResourceDeleted  => complete(HttpResponse(StatusCodes.OK))
               case ResourceNotFound => complete(HttpResponse(StatusCodes.NotFound))
@@ -108,7 +119,6 @@ trait ResourceService
   }
 
   protected def completeResource(
-    session: Session,
     resourceDetails: ResourceDetails,
     byteSource: Source[ByteString, Any],
     update: Boolean
@@ -116,7 +126,7 @@ trait ResourceService
     val future =
       byteSource.map { s => s.toArray }.runFold(Array[Byte]()) { (acc, bytes) => acc ++ bytes }
     onSuccess(future) { bytes =>
-      uploadResource(session, resourceDetails, bytes, update) completeWith {
+      uploadResource(resourceDetails, bytes, update) completeWith {
         case Right(r) =>
           r match {
             case ResourceCreated => complete(StatusCodes.Created)

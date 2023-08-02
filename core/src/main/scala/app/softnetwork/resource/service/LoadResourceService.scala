@@ -16,7 +16,6 @@ import app.softnetwork.resource.message.ResourceMessages.{
 import app.softnetwork.resource.spi.ResourceProvider
 import app.softnetwork.utils.MimeTypeTools
 import org.apache.tika.mime.MediaType
-import org.softnetwork.session.model.Session
 
 import java.nio.file.Path
 import scala.concurrent.Future
@@ -24,7 +23,8 @@ import scala.concurrent.Future
 trait LoadResourceService extends Service[ResourceCommand, ResourceResult] {
   _: GenericResourceHandler with ResourceProvider =>
 
-  def loadResource(resourceDetails: ResourceDetails): Option[(Path, Option[MediaType])] = {
+  def loadResource(segments: List[String]): Option[(Path, Option[MediaType])] = {
+    val resourceDetails: ResourceDetails = segments
     import resourceDetails._
     loadResource(uuid, uri, None, options: _*) match {
       case Some(path) =>
@@ -47,32 +47,35 @@ trait LoadResourceService extends Service[ResourceCommand, ResourceResult] {
                         .flatMap(mimeType => Option(MediaType.parse(mimeType)))
                   }
                 )
-              case _ => None
+              case _ =>
+                log.warn(s"Could not find resource for ${segments.mkString("/")}")
+                None
             }
-          case _ => None
+          case _ =>
+            log.warn(s"Could not find resource for ${segments.mkString("/")}")
+            None
         }
     }
   }
 
   def uploadResource(
-    session: Session,
     resourceDetails: ResourceDetails,
     bytes: Array[Byte],
     update: Boolean
   ): Future[Either[ResourceError, ResourceResult]] = {
     import resourceDetails._
-    log.info(s"Resource ${session.id}#$uuid uploaded successfully")
+    log.info(s"Resource $uuid uploaded successfully")
     run(
-      s"${session.id}#$uuid",
+      uuid,
       if (update) {
         UpdateResource(
-          s"${session.id}#$uuid",
+          uuid,
           bytes,
           uri
         )
       } else {
         CreateResource(
-          s"${session.id}#$uuid",
+          uuid,
           bytes,
           uri
         )
