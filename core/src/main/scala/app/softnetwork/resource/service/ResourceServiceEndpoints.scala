@@ -8,10 +8,11 @@ import app.softnetwork.resource.handlers.GenericResourceHandler
 import app.softnetwork.resource.message.ResourceMessages._
 import app.softnetwork.resource.spi.{ResourceProvider, SimpleResource}
 import app.softnetwork.session.service.ServiceWithSessionEndpoints
+import org.apache.tika.mime.MediaType
 import org.softnetwork.session.model.Session
 import sttp.capabilities.akka.AkkaStreams
 import sttp.model.headers.CookieValueWithMeta
-import sttp.model.{Method, Part, StatusCode}
+import sttp.model.{HeaderNames, Method, Part, StatusCode}
 import sttp.tapir._
 import sttp.tapir.json.json4s.jsonBody
 import sttp.tapir.server.{PartialServerEndpointWithSecurityOutput, ServerEndpoint}
@@ -56,27 +57,31 @@ trait ResourceServiceEndpoints
 
   def loadResourceBusinessLogic(segments: List[String]): Either[
     ApiErrors.ErrorInfo,
-    Source[ByteString, Any]
+    (Source[ByteString, Any], Option[MediaType])
   ] =
     loadResource(segments) match {
-      case Some((path, _)) => Right(FileIO.fromPath(path))
-      case _               => Left(error(ResourceNotFound))
+      case Some((path, media)) => Right((FileIO.fromPath(path), media))
+      case _                   => Left(error(ResourceNotFound))
     }
 
-  val getResource: ServerEndpoint[Any with AkkaStreams, Future] =
-    secureEndpoint.get
+  def getResource(prefix: Option[String]): ServerEndpoint[Any with AkkaStreams, Future] = {
+    (prefix match {
+      case Some(value) => secureEndpoint.get.in(value)
+      case _           => secureEndpoint.get
+    })
       .in(paths)
       .out(streamBinaryBody(AkkaStreams)(CodecFormat.OctetStream()))
-      .serverLogic(_ => segments => Future.successful(loadResourceBusinessLogic(segments)))
-
-  val getImage: ServerEndpoint[Any with AkkaStreams, Future] =
-    secureEndpoint.get
-      .in("images")
-      .in(paths)
-      .out(
-        streamBinaryBody(AkkaStreams)(CodecFormat.OctetStream())
+      .out(header[Option[String]](HeaderNames.ContentType))
+      .serverLogic(_ =>
+        segments =>
+          Future.successful(loadResourceBusinessLogic(segments) match {
+            case Left(l)  => Left(l)
+            case Right(r) => Right(r._1, r._2.map(_.toString))
+          })
       )
-      .serverLogic(_ => segments => Future.successful(loadResourceBusinessLogic(segments)))
+  }
+
+  val getImage: ServerEndpoint[Any with AkkaStreams, Future] = getResource(Some("images"))
 
   def uploadResource[T <: Upload](implicit
     multipartCodec: MultipartCodec[T]
@@ -251,7 +256,7 @@ trait ResourceServiceEndpoints
     deleteImage,
     addResource[UploadResource],
     updateResource[UploadResource],
-    getResource,
+    getResource(None),
     deleteResource
   )
 

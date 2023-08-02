@@ -136,6 +136,7 @@ trait ResourceToLocalFileSystemRouteTestKit
       )
     ) ~> routes ~> check {
       status shouldEqual StatusCodes.OK
+      assert(response.entity.contentType.mediaType.isImage)
       refreshSession(headers)
     }
   }
