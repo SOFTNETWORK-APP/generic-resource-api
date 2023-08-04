@@ -9,7 +9,7 @@ import app.softnetwork.resource.config.ResourceSettings.{
   ResourcePath
 }
 import app.softnetwork.utils.ImageTools.ImageSize
-import app.softnetwork.utils.{Base64Tools, ImageTools, MimeTypeTools}
+import app.softnetwork.utils.{Base64Tools, ImageTools}
 import com.typesafe.scalalogging.StrictLogging
 
 import java.nio.file.{Files, LinkOption, Path, Paths}
@@ -87,9 +87,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
         size match {
           case Some(s) =>
             val imageSize: ImageSize = s.asInstanceOf[SizeOption].size
-            import imageSize._
-            val format = MimeTypeTools.toFormat(path).getOrElse("jpeg")
-            val out = Paths.get(s"${path.toAbsolutePath}.${width}x$height.$format")
+            val out = imageSize.resizedPath(path, None)
             if (Files.exists(out)) {
               Some(out)
             } else {
