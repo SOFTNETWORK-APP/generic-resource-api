@@ -5,6 +5,7 @@ import app.softnetwork.persistence.launch.{PersistenceGuardian, PersistentEntity
 import app.softnetwork.persistence.query.EventProcessorStream
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.persistence.typed.Singleton
+import app.softnetwork.resource.ResourceCoreBuildInfo
 import app.softnetwork.resource.message.ResourceEvents.ResourceEvent
 import app.softnetwork.resource.message.ResourceMessages.{ResourceCommand, ResourceResult}
 import app.softnetwork.resource.model.GenericResource
@@ -36,4 +37,6 @@ trait ResourceGuardian[Resource <: GenericResource] extends PersistenceGuardian 
       resourceToExternalProcessorStream(sys)
     )
 
+  override def systemVersion(): String =
+    sys.env.getOrElse("VERSION", ResourceCoreBuildInfo.version)
 }

@@ -1,5 +1,3 @@
-import app.softnetwork.sbt.build._
-
 organization := "app.softnetwork.resource"
 
 name := "resource-common"

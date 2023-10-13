@@ -1,4 +1,3 @@
-import app.softnetwork.sbt.build._
 import com.typesafe.sbt.packager.docker._
 
 Compile / mainClass := Some("app.softnetwork.resource.api.ResourceToLocalFileSystemEndpointsWithOneOffCookiePostgresLauncher")

@@ -8,7 +8,7 @@ import app.softnetwork.resource.service.{
   LocalFileSystemResourceServiceEndpoints,
   ResourceServiceEndpoints
 }
-import com.softwaremill.session.CsrfCheck
+import app.softnetwork.session.CsrfCheck
 
 trait ResourceToLocalFileSystemEndpointsApi
     extends ResourceToLocalFileSystemApi

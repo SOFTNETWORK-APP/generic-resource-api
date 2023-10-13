@@ -6,7 +6,7 @@ import app.softnetwork.resource.service.{
   LocalFileSystemResourceServiceEndpoints,
   ResourceServiceEndpoints
 }
-import com.softwaremill.session.CsrfCheck
+import app.softnetwork.session.CsrfCheck
 import org.scalatest.Suite
 
 trait ResourceToLocalFileSystemEndpointsTestKit

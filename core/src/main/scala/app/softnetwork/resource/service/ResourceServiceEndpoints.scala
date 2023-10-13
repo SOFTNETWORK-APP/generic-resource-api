@@ -2,7 +2,7 @@ package app.softnetwork.resource.service
 
 import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
-import app.softnetwork.api.server.ApiErrors
+import app.softnetwork.api.server.{ApiErrors, SwaggerApiEndpoint}
 import app.softnetwork.resource.config.ResourceSettings
 import app.softnetwork.resource.handlers.GenericResourceHandler
 import app.softnetwork.resource.message.ResourceMessages._
@@ -21,7 +21,8 @@ import scala.concurrent.Future
 
 trait ResourceServiceEndpoints
     extends LoadResourceService
-    with ServiceWithSessionEndpoints[ResourceCommand, ResourceResult] {
+    with ServiceWithSessionEndpoints[ResourceCommand, ResourceResult]
+    with SwaggerApiEndpoint {
   _: GenericResourceHandler with ResourceProvider =>
 
   import app.softnetwork.serialization._

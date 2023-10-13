@@ -5,8 +5,8 @@ import app.softnetwork.api.server.ApiEndpoint
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.resource.launch.ResourceEndpoints
 import app.softnetwork.resource.model.GenericResource
+import app.softnetwork.session.CsrfCheck
 import app.softnetwork.session.scalatest.SessionEndpointsRoutes
-import com.softwaremill.session.CsrfCheck
 
 trait ResourceEndpointsTestKit[Resource <: GenericResource]
     extends ResourceEndpoints[Resource]
