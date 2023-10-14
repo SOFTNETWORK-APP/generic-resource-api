@@ -1,13 +1,11 @@
 package app.softnetwork.resource.api
 
-import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence.jdbc.schema.{JdbcSchemaProvider, JdbcSchemaTypes}
 import app.softnetwork.persistence.schema.SchemaType
 import app.softnetwork.session.CsrfCheckHeader
-import app.softnetwork.session.service.SessionEndpoints
 import org.slf4j.{Logger, LoggerFactory}
 
-object ResourceToLocalFileSystemEndpointsWithOneOffCookiePostgresLauncher
+object ResourceToLocalFileSystemEndpointsPostgresLauncher
     extends ResourceToLocalFileSystemEndpointsApi
     with CsrfCheckHeader
     with JdbcSchemaProvider {
@@ -15,6 +13,4 @@ object ResourceToLocalFileSystemEndpointsWithOneOffCookiePostgresLauncher
 
   def schemaType: SchemaType = JdbcSchemaTypes.Postgres
 
-  override def sessionEndpoints: ActorSystem[_] => SessionEndpoints = system =>
-    SessionEndpoints.oneOffCookie(system, checkHeaderAndForm)
 }

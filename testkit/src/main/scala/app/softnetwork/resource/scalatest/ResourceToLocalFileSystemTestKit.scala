@@ -12,10 +12,12 @@ import app.softnetwork.resource.persistence.query.{
   ResourceToLocalFileSystemProcessorStream
 }
 import app.softnetwork.resource.persistence.typed.ResourceBehavior
+import app.softnetwork.session.{CsrfCheck, CsrfCheckHeader}
 import org.scalatest.Suite
 import org.slf4j.{Logger, LoggerFactory}
 
-trait ResourceToLocalFileSystemTestKit extends ResourceTestKit[Resource] { _: Suite =>
+trait ResourceToLocalFileSystemTestKit extends ResourceTestKit[Resource] with CsrfCheckHeader {
+  _: Suite =>
 
   override def resourceEntity
     : ActorSystem[_] => PersistentEntity[ResourceCommand, Resource, ResourceEvent, ResourceResult] =

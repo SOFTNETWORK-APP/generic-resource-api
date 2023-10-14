@@ -4,11 +4,12 @@ import app.softnetwork.persistence.scalatest.InMemoryPersistenceTestKit
 import app.softnetwork.resource.config.ResourceSettings
 import app.softnetwork.resource.launch.ResourceGuardian
 import app.softnetwork.resource.model.GenericResource
+import app.softnetwork.session.CsrfCheck
 import org.scalatest.Suite
 
 trait ResourceTestKit[Resource <: GenericResource]
     extends ResourceGuardian[Resource]
-    with InMemoryPersistenceTestKit { _: Suite =>
+    with InMemoryPersistenceTestKit { _: Suite with CsrfCheck =>
 
   /** @return
     *   roles associated with this node

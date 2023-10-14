@@ -21,8 +21,7 @@ import scala.concurrent.Future
 
 trait ResourceServiceEndpoints
     extends LoadResourceService
-    with ServiceWithSessionEndpoints[ResourceCommand, ResourceResult]
-    with SwaggerApiEndpoint {
+    with ServiceWithSessionEndpoints[ResourceCommand, ResourceResult] {
   _: GenericResourceHandler with ResourceProvider =>
 
   import app.softnetwork.serialization._

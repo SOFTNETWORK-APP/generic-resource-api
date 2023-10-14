@@ -1,18 +1,14 @@
 package app.softnetwork.resource.api
 
-import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence.jdbc.schema.{JdbcSchemaProvider, JdbcSchemaTypes}
 import app.softnetwork.persistence.schema.SchemaType
-import app.softnetwork.session.service.SessionService
 import org.slf4j.{Logger, LoggerFactory}
 
-object ResourceToLocalFileSystemRoutesWithOneOffCookiePostgresLauncher
+object ResourceToLocalFileSystemRoutesPostgresLauncher
     extends ResourceToLocalFileSystemRoutesApi
     with JdbcSchemaProvider {
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   def schemaType: SchemaType = JdbcSchemaTypes.Postgres
 
-  override def sessionService: ActorSystem[_] => SessionService = system =>
-    SessionService.oneOffCookie(system)
 }

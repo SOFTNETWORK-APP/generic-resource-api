@@ -1,6 +1,6 @@
 import com.typesafe.sbt.packager.docker._
 
-Compile / mainClass := Some("app.softnetwork.resource.api.ResourceToLocalFileSystemEndpointsWithOneOffCookiePostgresLauncher")
+Compile / mainClass := Some("app.softnetwork.resource.api.ResourceToLocalFileSystemEndpointsPostgresLauncher")
 
 dockerBaseImage := "openjdk:8"
 

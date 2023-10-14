@@ -5,13 +5,9 @@ import app.softnetwork.api.server.{ApiRoute, ApiRoutes}
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.resource.model.GenericResource
 import app.softnetwork.resource.service.ResourceService
-import app.softnetwork.session.service.SessionService
 
-trait ResourceRoutes[Resource <: GenericResource]
-    extends ApiRoutes
-    with ResourceGuardian[Resource] { _: SchemaProvider =>
-
-  def sessionService: ActorSystem[_] => SessionService
+trait ResourceRoutes[Resource <: GenericResource] extends ApiRoutes {
+  _: ResourceGuardian[Resource] with SchemaProvider =>
 
   def resourceService: ActorSystem[_] => ResourceService
 

@@ -1,7 +1,7 @@
 package app.softnetwork.resource.launch
 
 import akka.actor.typed.ActorSystem
-import app.softnetwork.persistence.launch.{PersistenceGuardian, PersistentEntity}
+import app.softnetwork.persistence.launch.PersistentEntity
 import app.softnetwork.persistence.query.EventProcessorStream
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.persistence.typed.Singleton
@@ -10,10 +10,12 @@ import app.softnetwork.resource.message.ResourceEvents.ResourceEvent
 import app.softnetwork.resource.message.ResourceMessages.{ResourceCommand, ResourceResult}
 import app.softnetwork.resource.model.GenericResource
 import app.softnetwork.resource.persistence.query.GenericResourceToExternalProcessorStream
+import app.softnetwork.session.CsrfCheck
+import app.softnetwork.session.launch.SessionGuardian
 import com.typesafe.scalalogging.StrictLogging
 
-trait ResourceGuardian[Resource <: GenericResource] extends PersistenceGuardian with StrictLogging {
-  _: SchemaProvider =>
+trait ResourceGuardian[Resource <: GenericResource] extends SessionGuardian with StrictLogging {
+  _: SchemaProvider with CsrfCheck =>
 
   def resourceEntity
     : ActorSystem[_] => PersistentEntity[ResourceCommand, Resource, ResourceEvent, ResourceResult]
