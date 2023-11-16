@@ -7,11 +7,12 @@ import app.softnetwork.persistence.launch.PersistenceGuardian._
 import app.softnetwork.resource.model.GenericResource
 import app.softnetwork.session.persistence.typed.SessionRefreshTokenBehavior
 import app.softnetwork.session.scalatest.SessionTestKit
+import app.softnetwork.session.service.SessionMaterials
 import org.scalatest.Suite
 
 trait ResourceRouteTestKit[Resource <: GenericResource]
     extends SessionTestKit
-    with ResourceTestKit[Resource] { _: Suite with ApiRoutes =>
+    with ResourceTestKit[Resource] { _: Suite with ApiRoutes with SessionMaterials =>
 
   override def beforeAll(): Unit = {
     super.beforeAll()

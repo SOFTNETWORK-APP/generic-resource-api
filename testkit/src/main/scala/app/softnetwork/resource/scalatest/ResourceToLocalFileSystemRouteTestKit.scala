@@ -15,6 +15,7 @@ import app.softnetwork.resource.message.ResourceEvents.{
 }
 import app.softnetwork.resource.model.Resource
 import app.softnetwork.resource.spi.SimpleResource
+import app.softnetwork.session.service.SessionMaterials
 import org.scalatest.Suite
 
 import java.net.URLEncoder
@@ -22,7 +23,7 @@ import java.nio.file.{Files, Path, Paths}
 
 trait ResourceToLocalFileSystemRouteTestKit
     extends ResourceRouteTestKit[Resource]
-    with ResourceToLocalFileSystemTestKit { _: Suite with ApiRoutes =>
+    with ResourceToLocalFileSystemTestKit { _: Suite with ApiRoutes with SessionMaterials =>
 
   val probe: TestProbe[ResourceEvent] = createTestProbe[ResourceEvent]()
   subscribeProbe(probe)

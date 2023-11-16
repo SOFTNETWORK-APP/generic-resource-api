@@ -1,5 +1,6 @@
 package app.softnetwork.resource.service
 
+import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.stream.Materializer
@@ -11,10 +12,11 @@ import app.softnetwork.resource.handlers.GenericResourceHandler
 import app.softnetwork.resource.message.ResourceMessages._
 import com.softwaremill.session.CsrfDirectives._
 import com.softwaremill.session.CsrfOptions._
-import org.softnetwork.session.model.Session._
 import app.softnetwork.resource.spi._
 import app.softnetwork.serialization.commonFormats
-import app.softnetwork.session.service.SessionService
+import app.softnetwork.session.config.Settings
+import app.softnetwork.session.service.{ServiceWithSessionDirectives, SessionMaterials}
+import com.softwaremill.session.SessionConfig
 import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s.{jackson, Formats}
@@ -27,15 +29,18 @@ trait ResourceService
     with DefaultComplete
     with Json4sSupport
     with StrictLogging
+    with ServiceWithSessionDirectives[ResourceCommand, ResourceResult]
     with LoadResourceService
     with ApiRoute {
-  _: GenericResourceHandler with ResourceProvider =>
+  _: GenericResourceHandler with ResourceProvider with SessionMaterials =>
 
   implicit def serialization: Serialization.type = jackson.Serialization
 
   implicit def formats: Formats = commonFormats
 
-  def sessionService: SessionService
+  implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
+
+  override implicit def ts: ActorSystem[_] = system
 
   val route: Route = {
     pathPrefix(ResourceSettings.ResourcePath) {
@@ -70,7 +75,7 @@ trait ResourceService
       // check anti CSRF token
       hmacTokenCsrfProtection(checkHeader) {
         // check if a session exists
-        sessionService.requiredSession { session =>
+        requiredSession(sc, gt) { session =>
           post {
             extractRequestContext { ctx =>
               implicit val materializer: Materializer = ctx.materializer

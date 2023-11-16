@@ -5,12 +5,18 @@ import app.softnetwork.api.server.ApiRoute
 import app.softnetwork.persistence.schema.SchemaProvider
 import app.softnetwork.resource.launch.{ResourceGuardian, ResourceRoutes}
 import app.softnetwork.resource.model.GenericResource
-import app.softnetwork.session.scalatest.SessionServiceRoutes
+import app.softnetwork.session.scalatest.{SessionServiceRoutes, SessionTestKit}
+import app.softnetwork.session.service.SessionMaterials
 import org.scalatest.Suite
 
 trait ResourceRoutesTestKit[Resource <: GenericResource]
     extends ResourceRoutes[Resource]
-    with SessionServiceRoutes { _: Suite with ResourceGuardian[Resource] with SchemaProvider =>
+    with SessionServiceRoutes {
+  _: Suite
+    with ResourceGuardian[Resource]
+    with SchemaProvider
+    with SessionTestKit
+    with SessionMaterials =>
 
   override def apiRoutes: ActorSystem[_] => List[ApiRoute] =
     system =>

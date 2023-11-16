@@ -2,7 +2,7 @@ package app.softnetwork.resource.service
 
 import app.softnetwork.api.server.ApiRoutes
 import app.softnetwork.resource.scalatest.ResourceToLocalFileSystemRouteTestKit
-import app.softnetwork.session.config.Settings
+import app.softnetwork.session.service.SessionMaterials
 import org.scalatest.Suite
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.slf4j.{Logger, LoggerFactory}
@@ -12,9 +12,7 @@ import java.nio.file.{Path, Paths}
 import scala.reflect.io.Directory
 
 trait ResourceServiceSpec extends AnyWordSpecLike with ResourceToLocalFileSystemRouteTestKit {
-  _: Suite with ApiRoutes =>
-
-  override def sessionHeaderName: String = Settings.Session.CookieName
+  _: Suite with ApiRoutes with SessionMaterials =>
 
   override val refreshableSession: Boolean = false
 

@@ -1,9 +1,0 @@
-package app.softnetwork.resource.service
-
-import app.softnetwork.resource.scalatest.ResourceToLocalFileSystemRoutesTestKit
-import app.softnetwork.session.scalatest.RefreshableHeaderSessionServiceTestKit
-
-class ResourceToLocalFileSystemRoutesWithRefreshableHeaderSessionSpec
-    extends ResourceServiceSpec
-    with RefreshableHeaderSessionServiceTestKit
-    with ResourceToLocalFileSystemRoutesTestKit

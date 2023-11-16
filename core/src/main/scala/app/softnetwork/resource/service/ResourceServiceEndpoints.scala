@@ -1,13 +1,16 @@
 package app.softnetwork.resource.service
 
+import akka.actor.typed.ActorSystem
 import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
-import app.softnetwork.api.server.{ApiErrors, SwaggerApiEndpoint}
+import app.softnetwork.api.server.ApiErrors
 import app.softnetwork.resource.config.ResourceSettings
 import app.softnetwork.resource.handlers.GenericResourceHandler
 import app.softnetwork.resource.message.ResourceMessages._
 import app.softnetwork.resource.spi.{ResourceProvider, SimpleResource}
-import app.softnetwork.session.service.ServiceWithSessionEndpoints
+import app.softnetwork.session.config.Settings
+import app.softnetwork.session.service.{ServiceWithSessionEndpoints, SessionMaterials}
+import com.softwaremill.session.SessionConfig
 import org.apache.tika.mime.MediaType
 import org.softnetwork.session.model.Session
 import sttp.capabilities.akka.AkkaStreams
@@ -22,9 +25,13 @@ import scala.concurrent.Future
 trait ResourceServiceEndpoints
     extends LoadResourceService
     with ServiceWithSessionEndpoints[ResourceCommand, ResourceResult] {
-  _: GenericResourceHandler with ResourceProvider =>
+  _: GenericResourceHandler with ResourceProvider with SessionMaterials =>
 
   import app.softnetwork.serialization._
+
+  implicit def sessionConfig: SessionConfig
+
+  override implicit def ts: ActorSystem[_] = system
 
   def error(e: ResourceError): ApiErrors.ErrorInfo =
     e match {
