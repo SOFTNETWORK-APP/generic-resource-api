@@ -23,7 +23,7 @@ trait ResourceGuardian[Resource <: GenericResource] extends SessionGuardian with
   /** initialize all entities
     */
   override def entities: ActorSystem[_] => Seq[PersistentEntity[_, _, _, _]] = sys =>
-    Seq(resourceEntity(sys))
+    sessionEntities(sys) :+ resourceEntity(sys)
 
   /** initialize all singletons
     */

@@ -7,30 +7,39 @@ import app.softnetwork.resource.service.{
   ResourceServiceEndpoints
 }
 import app.softnetwork.session.CsrfCheck
+import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.SessionMaterials
-import com.softwaremill.session.{SessionConfig, SessionManager}
+import com.softwaremill.session.{RefreshTokenStorage, SessionConfig, SessionManager}
 import org.scalatest.Suite
 import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
 
 import scala.concurrent.ExecutionContext
 
-trait ResourceToLocalFileSystemEndpointsTestKit
-    extends ResourceToLocalFileSystemRouteTestKit
-    with ResourceEndpointsTestKit[Resource] {
-  self: Suite with CsrfCheck with SessionMaterials =>
+trait ResourceToLocalFileSystemEndpointsTestKit[SD <: SessionData with SessionDataDecorator[SD]]
+    extends ResourceToLocalFileSystemRouteTestKit[SD]
+    with ResourceEndpointsTestKit[SD, Resource] {
+  self: Suite with CsrfCheck with SessionMaterials[SD] =>
 
-  def resourceEndpoints: ActorSystem[_] => ResourceServiceEndpoints =
+  def resourceEndpoints: ActorSystem[_] => ResourceServiceEndpoints[SD] =
     sys =>
-      new LocalFileSystemResourceServiceEndpoints with SessionMaterials {
-        override implicit def manager(implicit
-          sessionConfig: SessionConfig
-        ): SessionManager[Session] = self.manager
-        override protected def sessionType: Session.SessionType = self.sessionType
-        override def log: Logger = LoggerFactory getLogger getClass.getName
+      new LocalFileSystemResourceServiceEndpoints[SD] with SessionMaterials[SD] {
         override implicit def system: ActorSystem[_] = sys
-        override implicit lazy val ec: ExecutionContext = sys.executionContext
-        override implicit def sessionConfig: SessionConfig = self.sessionConfig
+
+        override lazy val ec: ExecutionContext = sys.executionContext
+        lazy val log: Logger = LoggerFactory getLogger getClass.getName
+
+        override protected def sessionType: Session.SessionType = self.sessionType
+
+        override implicit def manager(implicit
+          sessionConfig: SessionConfig,
+          companion: SessionDataCompanion[SD]
+        ): SessionManager[SD] = self.manager
+
+        override implicit def refreshTokenStorage: RefreshTokenStorage[SD] =
+          self.refreshTokenStorage
+
+        override implicit def companion: SessionDataCompanion[SD] = self.companion
       }
 
 }

@@ -9,10 +9,10 @@ import app.softnetwork.resource.handlers.GenericResourceHandler
 import app.softnetwork.resource.message.ResourceMessages._
 import app.softnetwork.resource.spi.{ResourceProvider, SimpleResource}
 import app.softnetwork.session.config.Settings
+import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.{ServiceWithSessionEndpoints, SessionMaterials}
 import com.softwaremill.session.SessionConfig
 import org.apache.tika.mime.MediaType
-import org.softnetwork.session.model.Session
 import sttp.capabilities.akka.AkkaStreams
 import sttp.model.headers.CookieValueWithMeta
 import sttp.model.{HeaderNames, Method, Part, StatusCode}
@@ -22,14 +22,16 @@ import sttp.tapir.server.{PartialServerEndpointWithSecurityOutput, ServerEndpoin
 
 import scala.concurrent.Future
 
-trait ResourceServiceEndpoints
+trait ResourceServiceEndpoints[SD <: SessionData with SessionDataDecorator[SD]]
     extends LoadResourceService
-    with ServiceWithSessionEndpoints[ResourceCommand, ResourceResult] {
-  _: GenericResourceHandler with ResourceProvider with SessionMaterials =>
+    with ServiceWithSessionEndpoints[ResourceCommand, ResourceResult, SD] {
+  _: GenericResourceHandler with ResourceProvider with SessionMaterials[SD] =>
 
   import app.softnetwork.serialization._
 
-  implicit def sessionConfig: SessionConfig
+  implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
+
+  implicit def companion: SessionDataCompanion[SD]
 
   override implicit def ts: ActorSystem[_] = system
 
@@ -41,7 +43,7 @@ trait ResourceServiceEndpoints
 
   def secureEndpoint: PartialServerEndpointWithSecurityOutput[
     (Seq[Option[String]], Option[String], Method, Option[String]),
-    Session,
+    SD,
     Unit,
     Any,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
@@ -94,7 +96,7 @@ trait ResourceServiceEndpoints
     multipartCodec: MultipartCodec[T]
   ): PartialServerEndpointWithSecurityOutput[
     (Seq[Option[String]], Option[String], Method, Option[String]),
-    Session,
+    SD,
     (List[String], T),
     Any,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
@@ -158,7 +160,7 @@ trait ResourceServiceEndpoints
     multipartCodec: MultipartCodec[T]
   ): PartialServerEndpointWithSecurityOutput[
     (Seq[Option[String]], Option[String], Method, Option[String]),
-    Session,
+    SD,
     (List[String], T),
     Any,
     (Seq[Option[String]], Option[CookieValueWithMeta]),
@@ -220,7 +222,7 @@ trait ResourceServiceEndpoints
       })
 
   def deleteResourceBusinessLogic(
-    session: Session,
+    session: SD,
     resourceDetails: ResourceDetails
   ): Future[Either[ResourceError, Unit]] = {
     import resourceDetails._

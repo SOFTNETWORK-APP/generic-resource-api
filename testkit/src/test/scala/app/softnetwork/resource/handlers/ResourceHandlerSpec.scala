@@ -12,8 +12,6 @@ import app.softnetwork.resource.scalatest.ResourceToLocalFileSystemTestKit
 import app.softnetwork.resource.spi.{LocalFileSystemProvider, SizeOption}
 import app.softnetwork.resource.utils.ResourceTools
 import app.softnetwork.session.config.Settings
-import app.softnetwork.session.model.SessionManagers
-import com.softwaremill.session.{SessionConfig, SessionManager}
 import org.slf4j.{Logger, LoggerFactory}
 import org.softnetwork.session.model.Session
 
@@ -32,9 +30,6 @@ class ResourceHandlerSpec
   lazy val log: Logger = LoggerFactory getLogger getClass.getName
 
   implicit lazy val system: ActorSystem[_] = typedSystem()
-
-  override protected def manager(implicit sessionConfig: SessionConfig): SessionManager[Session] =
-    SessionManagers.basic
 
   override protected def sessionType: Session.SessionType =
     Settings.Session.SessionContinuityAndTransport

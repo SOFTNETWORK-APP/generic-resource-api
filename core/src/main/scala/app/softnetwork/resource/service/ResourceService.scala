@@ -15,6 +15,7 @@ import com.softwaremill.session.CsrfOptions._
 import app.softnetwork.resource.spi._
 import app.softnetwork.serialization.commonFormats
 import app.softnetwork.session.config.Settings
+import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.{ServiceWithSessionDirectives, SessionMaterials}
 import com.softwaremill.session.SessionConfig
 import com.typesafe.scalalogging.StrictLogging
@@ -24,19 +25,21 @@ import org.json4s.jackson.Serialization
 
 /** Created by smanciot on 13/05/2020.
   */
-trait ResourceService
+trait ResourceService[SD <: SessionData with SessionDataDecorator[SD]]
     extends Directives
     with DefaultComplete
     with Json4sSupport
     with StrictLogging
-    with ServiceWithSessionDirectives[ResourceCommand, ResourceResult]
+    with ServiceWithSessionDirectives[ResourceCommand, ResourceResult, SD]
     with LoadResourceService
     with ApiRoute {
-  _: GenericResourceHandler with ResourceProvider with SessionMaterials =>
+  _: GenericResourceHandler with ResourceProvider with SessionMaterials[SD] =>
 
   implicit def serialization: Serialization.type = jackson.Serialization
 
   implicit def formats: Formats = commonFormats
+
+  implicit def companion: SessionDataCompanion[SD]
 
   implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
 
