@@ -12,13 +12,8 @@ import app.softnetwork.resource.model.Resource
 import app.softnetwork.resource.persistence.typed.ResourceBehavior
 import app.softnetwork.resource.service.LocalFileSystemResourceServiceEndpoints
 import app.softnetwork.session.CsrfCheck
-import app.softnetwork.session.config.Settings
-import app.softnetwork.session.model.{
-  SessionData,
-  SessionDataCompanion,
-  SessionDataDecorator,
-  SessionManagers
-}
+import app.softnetwork.session.api.SessionDataApi
+import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.SessionMaterials
 import com.softwaremill.session.{RefreshTokenStorage, SessionConfig, SessionManager}
 import org.slf4j.{Logger, LoggerFactory}
@@ -27,22 +22,12 @@ import org.softnetwork.session.model.Session
 import scala.concurrent.ExecutionContext
 
 trait ResourceApi[SD <: SessionData with SessionDataDecorator[SD]]
-    extends ResourceApplication[Resource] { self: SchemaProvider with CsrfCheck =>
+    extends ResourceApplication[Resource]
+    with SessionDataApi[SD] { self: SchemaProvider with CsrfCheck =>
 
   override def resourceEntity
     : ActorSystem[_] => PersistentEntity[ResourceCommand, Resource, ResourceEvent, ResourceResult] =
     _ => ResourceBehavior
-
-  implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
-
-  implicit def companion: SessionDataCompanion[SD]
-
-  protected def manager: SessionManager[SD]
-
-  protected def refreshTokenStorage: ActorSystem[_] => RefreshTokenStorage[SD]
-
-  override protected def sessionType: Session.SessionType =
-    Settings.Session.SessionContinuityAndTransport
 
   def resourceSwagger: ActorSystem[_] => SwaggerEndpoint =
     sys =>
