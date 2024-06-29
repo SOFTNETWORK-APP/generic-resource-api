@@ -8,7 +8,6 @@ import org.json4s.Formats
 import java.io.ByteArrayInputStream
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{Files, LinkOption, Paths}
-import java.util.Date
 import scala.util.{Failure, Success, Try}
 
 protected[resource] trait LocalFileSystemResourceProvider
@@ -58,7 +57,7 @@ protected[resource] trait LocalFileSystemResourceProvider
     } match {
       case Success(s) => s
       case Failure(f) =>
-        logger.error(f.getMessage, f)
+        log.error(f.getMessage, f)
         None
     }
   }

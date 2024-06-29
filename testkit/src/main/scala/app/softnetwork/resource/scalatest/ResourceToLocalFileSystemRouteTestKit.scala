@@ -86,7 +86,7 @@ trait ResourceToLocalFileSystemRouteTestKit[SD <: SessionData with SessionDataDe
         strictUri = strictUri.substring(7)
       }
       val path = s"$rootDir$strictUri/$sessionUuid"
-      logger.info(path)
+      log.info(path)
       assert(Files.exists(Paths.get(path)))
       refreshSession(headers)
       withHeaders(
@@ -114,7 +114,7 @@ trait ResourceToLocalFileSystemRouteTestKit[SD <: SessionData with SessionDataDe
         strictUri = strictUri.substring(7)
       }
       val path = s"$rootDir$strictUri/$sessionUuid"
-      logger.info(path)
+      log.info(path)
       assert(!Files.exists(Paths.get(path)))
       refreshSession(headers)
       withHeaders(

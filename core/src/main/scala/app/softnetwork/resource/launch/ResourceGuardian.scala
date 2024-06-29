@@ -12,9 +12,8 @@ import app.softnetwork.resource.model.GenericResource
 import app.softnetwork.resource.persistence.query.GenericResourceToExternalProcessorStream
 import app.softnetwork.session.CsrfCheck
 import app.softnetwork.session.launch.SessionGuardian
-import com.typesafe.scalalogging.StrictLogging
 
-trait ResourceGuardian[Resource <: GenericResource] extends SessionGuardian with StrictLogging {
+trait ResourceGuardian[Resource <: GenericResource] extends SessionGuardian {
   _: SchemaProvider with CsrfCheck =>
 
   def resourceEntity

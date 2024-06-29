@@ -10,7 +10,7 @@ import app.softnetwork.resource.config.ResourceSettings.{
 }
 import app.softnetwork.utils.ImageTools.ImageSize
 import app.softnetwork.utils.{Base64Tools, ImageTools}
-import com.typesafe.scalalogging.StrictLogging
+import org.slf4j.Logger
 
 import java.nio.file.{Files, LinkOption, Path, Paths}
 import java.util.stream.Collectors
@@ -18,7 +18,9 @@ import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
-trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
+trait LocalFileSystemProvider extends ResourceProvider {
+
+  def log: Logger
 
   lazy val rootDir = s"$ResourceDirectory/$environment"
 
@@ -40,8 +42,8 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
       val dir = Paths.get(rootDir, uri.getOrElse(""))
       if (!Files.exists(dir)) {
         Try(Files.createDirectories(dir)) match {
-          case Success(_) => logger.info(s"$dir created successfully")
-          case Failure(f) => logger.error(s"$dir can not be created -> ${f.getMessage}", f)
+          case Success(_) => log.info(s"$dir created successfully")
+          case Failure(f) => log.error(s"$dir can not be created -> ${f.getMessage}", f)
         }
       }
       val decoded = Base64Tools.decodeBase64(data)
@@ -55,7 +57,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
     } match {
       case Success(_) => true
       case Failure(f) =>
-        logger.error(f.getMessage, f)
+        log.error(f.getMessage, f)
         false
     }
   }
@@ -138,7 +140,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
     } match {
       case Success(_) => true
       case Failure(f) =>
-        logger.error(f.getMessage, f)
+        log.error(f.getMessage, f)
         false
     }
   }
@@ -155,8 +157,8 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
       val dir = Paths.get(rootDir, LibraryDirectory, strictUri(uri))
       if (!Files.exists(dir)) {
         Try(Files.createDirectories(dir)) match {
-          case Success(_) => logger.info(s"$dir created successfully")
-          case Failure(f) => logger.error(s"$dir can not be created -> ${f.getMessage}", f)
+          case Success(_) => log.info(s"$dir created successfully")
+          case Failure(f) => log.error(s"$dir can not be created -> ${f.getMessage}", f)
         }
       }
       Files
@@ -195,7 +197,7 @@ trait LocalFileSystemProvider extends ResourceProvider with StrictLogging {
           )
         })
       case Failure(f) =>
-        logger.error(f.getMessage, f)
+        log.error(f.getMessage, f)
         List.empty
     }
   }

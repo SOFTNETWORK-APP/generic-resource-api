@@ -18,7 +18,6 @@ import app.softnetwork.session.config.Settings
 import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.{ServiceWithSessionDirectives, SessionMaterials}
 import com.softwaremill.session.SessionConfig
-import com.typesafe.scalalogging.StrictLogging
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import org.json4s.{jackson, Formats}
 import org.json4s.jackson.Serialization
@@ -29,7 +28,6 @@ trait ResourceService[SD <: SessionData with SessionDataDecorator[SD]]
     extends Directives
     with DefaultComplete
     with Json4sSupport
-    with StrictLogging
     with ServiceWithSessionDirectives[ResourceCommand, ResourceResult, SD]
     with LoadResourceService
     with ApiRoute {
