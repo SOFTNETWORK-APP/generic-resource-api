@@ -40,31 +40,31 @@ trait ResourceTestKit[Resource <: GenericResource]
 
   def createResource(entityId: String, bytes: Array[Byte], uri: Option[String])(implicit
     system: ActorSystem[_]
-  ): ResourceCreatedEvent = {
+  ): ResourceEvent = {
     val probe = createTestProbe[ResourceEvent]()
     subscribeProbe(probe)
     resourceDao.createResource(entityId, bytes, uri) await {
-      case ResourceCreated => probe.expectMessageType[ResourceCreatedEvent]
+      case ResourceCreated => probe.receiveMessage()
       case _               => fail(s"Resource $entityId not created")
     }
   }
 
   def updateResource(entityId: String, bytes: Array[Byte], uri: Option[String])(implicit
     system: ActorSystem[_]
-  ): ResourceUpdatedEvent = {
+  ): ResourceEvent = {
     val probe = createTestProbe[ResourceEvent]()
     subscribeProbe(probe)
     resourceDao.updateResource(entityId, bytes, uri) await {
-      case ResourceUpdated => probe.expectMessageType[ResourceUpdatedEvent]
+      case ResourceUpdated => probe.receiveMessage()
       case _               => fail(s"Resource $entityId not updated")
     }
   }
 
-  def deleteResource(entityId: String)(implicit system: ActorSystem[_]): ResourceDeletedEvent = {
+  def deleteResource(entityId: String)(implicit system: ActorSystem[_]): ResourceEvent = {
     val probe = createTestProbe[ResourceEvent]()
     subscribeProbe(probe)
     resourceDao.deleteResource(entityId) await {
-      case ResourceDeleted => probe.expectMessageType[ResourceDeletedEvent]
+      case ResourceDeleted => probe.receiveMessage()
       case _               => fail(s"Resource $entityId not deleted")
     }
   }
