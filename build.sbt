@@ -2,7 +2,7 @@ ThisBuild / organization := "app.softnetwork"
 
 name := "resource"
 
-ThisBuild / version := "0.8.2"
+ThisBuild / version := "0.8.3"
 
 ThisBuild / scalaVersion := "2.12.18"
 
@@ -62,7 +62,8 @@ lazy val api = project.in(file("api"))
   .settings(Defaults.itSettings)
   .enablePlugins(DockerPlugin, JavaAppPackaging)
   .dependsOn(
-    core % "compile->compile;test->test;it->it"
+    core % "compile->compile;test->test;it->it",
+    local % "compile->compile;test->test;it->it"
   )
 
 lazy val root = project.in(file("."))

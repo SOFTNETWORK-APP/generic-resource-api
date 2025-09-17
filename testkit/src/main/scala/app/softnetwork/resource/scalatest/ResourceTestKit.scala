@@ -5,12 +5,7 @@ import app.softnetwork.persistence.scalatest.InMemoryPersistenceTestKit
 import app.softnetwork.resource.config.ResourceSettings
 import app.softnetwork.resource.handlers.ResourceDao
 import app.softnetwork.resource.launch.ResourceGuardian
-import app.softnetwork.resource.message.ResourceEvents.{
-  ResourceCreatedEvent,
-  ResourceDeletedEvent,
-  ResourceEvent,
-  ResourceUpdatedEvent
-}
+import app.softnetwork.resource.message.ResourceEvents.ResourceEvent
 import app.softnetwork.resource.message.ResourceMessages.{
   ResourceCreated,
   ResourceDeleted,
@@ -36,7 +31,7 @@ trait ResourceTestKit[Resource <: GenericResource]
 
   lazy val resourceProvider: ResourceProvider = ResourceProviders.provider(providerType)
 
-  def resourceDao: ResourceDao = ResourceDao
+  private[this] def resourceDao: ResourceDao = ResourceDao
 
   def createResource(entityId: String, bytes: Array[Byte], uri: Option[String])(implicit
     system: ActorSystem[_]
