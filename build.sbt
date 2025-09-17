@@ -66,6 +66,6 @@ lazy val api = project.in(file("api"))
   )
 
 lazy val root = project.in(file("."))
-  .aggregate(common, core, testkit, api)
+  .aggregate(common, local, core, testkit, api)
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
