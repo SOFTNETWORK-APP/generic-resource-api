@@ -42,12 +42,20 @@ sealed trait ResourceBehavior
     */
   override protected def tagEvent(entityId: String, event: ResourceEvent): Set[String] = {
     event match {
+      case _: SessionResourceEvent =>
+        Set(
+          s"${persistenceId.toLowerCase}-to-session"
+        )
       case _ =>
         Set(
           persistenceId,
           s"${persistenceId.toLowerCase}-to-localfilesystem",
           s"${persistenceId.toLowerCase}-to-s3",
-          s"${persistenceId.toLowerCase}-to-gcs"
+          s"${persistenceId.toLowerCase}-to-gcs",
+          s"${persistenceId.toLowerCase}-to-azure",
+          s"${persistenceId.toLowerCase}-to-minio",
+          s"${persistenceId.toLowerCase}-to-db", // database storage (Cassandra, Postgres, MySQL...)
+          s"${persistenceId.toLowerCase}-to-redis" // redis storage
         )
     }
   }
@@ -77,13 +85,20 @@ sealed trait ResourceBehavior
       case cmd: CreateResource =>
         import cmd._
         val createdDate = Instant.now()
+        val sessionId = if (uuid.contains('#')) uuid.split('#').headOption else None
+        val sessionEvent = sessionId.map(sid =>
+          SessionResourceCreatedEvent.defaultInstance
+            .withUuid(uuid)
+            .withSessionId(sid)
+            .copy(uri = uri)
+        )
         Effect
           .persist(
             ResourceCreatedEvent(
               asResource(uuid, bytes, uri)
                 .withCreatedDate(createdDate)
                 .withLastUpdated(createdDate)
-            )
+            ) +: sessionEvent.toList
           )
           .thenRun(_ => { ResourceCreated ~> replyTo })
 
@@ -96,13 +111,20 @@ sealed trait ResourceBehavior
             case None           => Instant.now()
           }
         }
+        val sessionId = if (uuid.contains('#')) uuid.split('#').headOption else None
+        val sessionEvent = sessionId.map(sid =>
+          SessionResourceUpdatedEvent.defaultInstance
+            .withUuid(uuid)
+            .withSessionId(sid)
+            .copy(uri = uri)
+        )
         Effect
           .persist(
             ResourceUpdatedEvent(
               asResource(uuid, bytes, uri)
                 .withCreatedDate(createdDate)
                 .withLastUpdated(lastUpdated)
-            )
+            ) +: sessionEvent.toList
           )
           .thenRun(_ => { ResourceUpdated ~> replyTo })
 
@@ -120,11 +142,15 @@ sealed trait ResourceBehavior
                 case Some(uri) => s"$uri/$entityId"
                 case _         => entityId
               }
+            val sessionId = if (uuid.contains('#')) uuid.split('#').headOption else None
+            val sessionEvent = sessionId.map(sid =>
+              SessionResourceDeletedEvent.defaultInstance.withUuid(uuid).withSessionId(sid)
+            )
             Effect
               .persist[ResourceEvent, Option[Resource]](
                 ResourceDeletedEvent(
                   uuid
-                )
+                ) +: sessionEvent.toList
               )
               .thenRun(_ => {
                 ResourceDeleted ~> replyTo
