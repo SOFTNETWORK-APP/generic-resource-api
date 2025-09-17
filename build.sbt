@@ -2,7 +2,7 @@ ThisBuild / organization := "app.softnetwork"
 
 name := "resource"
 
-ThisBuild / version := "0.7.0"
+ThisBuild / version := "0.8.0"
 
 ThisBuild / scalaVersion := "2.12.18"
 
@@ -34,6 +34,13 @@ lazy val common = project.in(file("common"))
   .settings(Defaults.itSettings)
   .enablePlugins(AkkaGrpcPlugin)
 
+lazy val local = project.in(file("local"))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
+  .dependsOn(
+    common % "compile->compile;test->test;it->it"
+  )
+
 lazy val core = project.in(file("core"))
   .configs(IntegrationTest)
   .settings(Defaults.itSettings, app.softnetwork.Info.infoSettings)
@@ -46,7 +53,8 @@ lazy val testkit = project.in(file("testkit"))
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
   .dependsOn(
-    core % "compile->compile;test->test;it->it"
+    core % "compile->compile;test->test;it->it",
+    local % "compile->compile;test->test;it->it"
   )
 
 lazy val api = project.in(file("api"))

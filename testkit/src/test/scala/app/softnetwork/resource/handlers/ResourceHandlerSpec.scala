@@ -9,7 +9,7 @@ import app.softnetwork.utils.HashTools
 import app.softnetwork.resource.config.ResourceSettings.{BaseUrl, ImageSizes, ResourcePath}
 import app.softnetwork.resource.message.ResourceEvents._
 import app.softnetwork.resource.scalatest.ResourceToLocalFileSystemTestKit
-import app.softnetwork.resource.spi.{LocalFileSystemProvider, SizeOption}
+import app.softnetwork.resource.spi.SizeOption
 import app.softnetwork.resource.utils.ResourceTools
 import app.softnetwork.session.config.Settings
 import org.slf4j.{Logger, LoggerFactory}
@@ -23,7 +23,6 @@ import scala.reflect.io.Directory
   */
 class ResourceHandlerSpec
     extends ResourceHandler
-    with LocalFileSystemProvider
     with AnyWordSpecLike
     with ResourceToLocalFileSystemTestKit {
 
@@ -50,7 +49,7 @@ class ResourceHandlerSpec
         new ByteArrayInputStream(bytes)
       )
       .getOrElse("")
-    val dir = new Directory(new File(rootDir))
+    val dir = new Directory(new File(provider.rootDir))
     dir.deleteRecursively()
   }
 
@@ -62,7 +61,7 @@ class ResourceHandlerSpec
       createOrUpdateResource("create") await {
         case ResourceCreated =>
           probe.expectMessageType[ResourceCreatedEvent]
-          assert(Files.exists(Paths.get(s"$rootDir${uri.getOrElse("")}/create")))
+          assert(Files.exists(Paths.get(s"${provider.rootDir}${uri.getOrElse("")}/create")))
         case _ => fail()
       }
     }
@@ -73,7 +72,7 @@ class ResourceHandlerSpec
       createOrUpdateResource("update", update = true) await {
         case ResourceUpdated =>
           probe.expectMessageType[ResourceUpdatedEvent]
-          assert(Files.exists(Paths.get(s"$rootDir${uri.getOrElse("")}/update")))
+          assert(Files.exists(Paths.get(s"${provider.rootDir}${uri.getOrElse("")}/update")))
         case _ => fail()
       }
     }
@@ -84,12 +83,12 @@ class ResourceHandlerSpec
       createOrUpdateResource("load") await {
         case ResourceCreated =>
           probe.expectMessageType[ResourceCreatedEvent]
-          assert(Files.exists(Paths.get(s"$rootDir${uri.getOrElse("")}/load")))
+          assert(Files.exists(Paths.get(s"${provider.rootDir}${uri.getOrElse("")}/load")))
           ?("load", LoadResource("load")) await {
             case r: ResourceLoaded =>
               r.resource.md5 shouldBe md5
               for (size <- ImageSizes.values) {
-                loadResource("load", uri, None, Seq(SizeOption(size)): _*) match {
+                provider.loadResource("load", uri, None, Seq(SizeOption(size)): _*) match {
                   case Some(_) =>
                   case _       => fail()
                 }
@@ -106,11 +105,11 @@ class ResourceHandlerSpec
       createOrUpdateResource("delete") await {
         case ResourceCreated =>
           probe.expectMessageType[ResourceCreatedEvent]
-          assert(Files.exists(Paths.get(s"$rootDir${uri.getOrElse("")}/delete")))
+          assert(Files.exists(Paths.get(s"${provider.rootDir}${uri.getOrElse("")}/delete")))
           ?("delete", DeleteResource("delete")) await {
             case ResourceDeleted =>
               probe.expectMessageType[ResourceDeletedEvent]
-              assert(!Files.exists(Paths.get(s"$rootDir${uri.getOrElse("")}/delete")))
+              assert(!Files.exists(Paths.get(s"${provider.rootDir}${uri.getOrElse("")}/delete")))
             case _ => fail()
           }
         case _ => fail()
@@ -118,7 +117,7 @@ class ResourceHandlerSpec
     }
 
     "list resources" in {
-      val resources = listResources(uri.getOrElse("/"))
+      val resources = provider.listResources(uri.getOrElse("/"))
       assert(resources.nonEmpty)
       assert(resources.forall(!_.directory))
       val files = resources.map(_.name)

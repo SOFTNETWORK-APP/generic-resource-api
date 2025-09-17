@@ -2,14 +2,19 @@ package app.softnetwork.resource.persistence.query
 
 import app.softnetwork.persistence.ManifestWrapper
 import app.softnetwork.persistence.query.ExternalPersistenceProvider
+import app.softnetwork.resource.model.Resource.ProviderType
 import app.softnetwork.resource.model.GenericResource
-import app.softnetwork.resource.spi.{LocalFileSystemProvider, ResourceProvider}
+import app.softnetwork.resource.spi.{ResourceProvider, ResourceProviders}
 
 import scala.reflect.ClassTag
 
 protected[resource] trait ExternalGenericResourceProvider[Resource <: GenericResource]
     extends ExternalPersistenceProvider[Resource] {
-  _: ResourceProvider with ManifestWrapper[Resource] =>
+  _: ManifestWrapper[Resource] =>
+
+  def providerType: ProviderType
+
+  def provider: ResourceProvider = ResourceProviders.provider(providerType)
 
   /** Creates the underlying document to the external system
     *
@@ -22,7 +27,7 @@ protected[resource] trait ExternalGenericResourceProvider[Resource <: GenericRes
     */
   override def createDocument(document: Resource)(implicit t: ClassTag[Resource]): Boolean = {
     import document._
-    upsertResource(uuid, content, uri)
+    provider.upsertResource(uuid, content, uri)
   }
 
   /** Updates the underlying document to the external system
@@ -41,7 +46,7 @@ protected[resource] trait ExternalGenericResourceProvider[Resource <: GenericRes
     t: ClassTag[Resource]
   ): Boolean = {
     import document._
-    upsertResource(uuid, content, uri)
+    provider.upsertResource(uuid, content, uri)
   }
 
   /** Upsert the underlying document referenced by its uuid to the external system
@@ -61,7 +66,7 @@ protected[resource] trait ExternalGenericResourceProvider[Resource <: GenericRes
       else
         None
     }
-    upsertResource(segments.last, data, uri)
+    provider.upsertResource(segments.last, data, uri)
   }
 
   /** Deletes the underlying document referenced by its uuid to the external system
@@ -79,7 +84,7 @@ protected[resource] trait ExternalGenericResourceProvider[Resource <: GenericRes
       else
         None
     }
-    deleteResource(segments.last, uri)
+    provider.deleteResource(segments.last, uri)
   }
 
 }

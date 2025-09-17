@@ -1,16 +1,9 @@
 package app.softnetwork.resource.spi
 
 import app.softnetwork.persistence.environment
-import app.softnetwork.resource.config.ResourceSettings.{
-  BaseUrl,
-  ImageSizes,
-  LibraryDirectory,
-  ResourceDirectory,
-  ResourcePath
-}
+import app.softnetwork.resource.config.ResourceSettings._
 import app.softnetwork.utils.ImageTools.ImageSize
 import app.softnetwork.utils.{Base64Tools, ImageTools}
-import org.slf4j.Logger
 
 import java.nio.file.{Files, LinkOption, Path, Paths}
 import java.util.stream.Collectors
@@ -19,8 +12,6 @@ import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
 
 trait LocalFileSystemProvider extends ResourceProvider {
-
-  def log: Logger
 
   lazy val rootDir = s"$ResourceDirectory/$environment"
 

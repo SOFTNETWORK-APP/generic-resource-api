@@ -2,6 +2,7 @@ package app.softnetwork.resource.service
 
 import app.softnetwork.persistence.service.Service
 import app.softnetwork.resource.handlers.GenericResourceHandler
+import app.softnetwork.resource.model.Resource.ProviderType
 import app.softnetwork.resource.message.ResourceMessages.{
   CreateResource,
   LoadResource,
@@ -13,7 +14,7 @@ import app.softnetwork.resource.message.ResourceMessages.{
   ResourceUpdated,
   UpdateResource
 }
-import app.softnetwork.resource.spi.ResourceProvider
+import app.softnetwork.resource.spi.{ResourceProvider, ResourceProviders}
 import app.softnetwork.utils.MimeTypeTools
 import org.apache.tika.mime.MediaType
 
@@ -21,12 +22,16 @@ import java.nio.file.Path
 import scala.concurrent.Future
 
 trait LoadResourceService extends Service[ResourceCommand, ResourceResult] {
-  _: GenericResourceHandler with ResourceProvider =>
+  _: GenericResourceHandler =>
+
+  def providerType: ProviderType
+
+  def provider: ResourceProvider = ResourceProviders.provider(providerType)
 
   def loadResource(segments: List[String]): Option[(Path, Option[MediaType])] = {
     val resourceDetails: ResourceDetails = segments
     import resourceDetails._
-    loadResource(uuid, uri, None, options: _*) match {
+    provider.loadResource(uuid, uri, None, options: _*) match {
       case Some(path) =>
         Some(
           path,
@@ -35,7 +40,7 @@ trait LoadResourceService extends Service[ResourceCommand, ResourceResult] {
       case _ =>
         run(uuid, LoadResource(uuid)) match {
           case result: ResourceLoaded =>
-            loadResource(uuid, uri, Option(result.resource.content), options: _*) match {
+            provider.loadResource(uuid, uri, Option(result.resource.content), options: _*) match {
               case Some(path) =>
                 Some(
                   path,

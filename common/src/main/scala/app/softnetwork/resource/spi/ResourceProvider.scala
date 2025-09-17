@@ -1,10 +1,15 @@
 package app.softnetwork.resource.spi
 
 import app.softnetwork.utils.ImageTools.ImageSize
+import org.slf4j.Logger
 
 import java.nio.file.Path
 
 protected[resource] trait ResourceProvider {
+
+  def log: Logger
+
+  def rootDir: String
 
   /** Upsert the underlying resource referenced by its uuid to the resource provider
     *

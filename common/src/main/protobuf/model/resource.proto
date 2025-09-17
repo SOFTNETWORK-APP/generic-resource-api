@@ -23,6 +23,16 @@ option (scalapb.options) = {
  * @param md5 - resource md5
  */
 message Resource {
+
+    enum ProviderType {
+        LOCAL = 0;
+        AWS = 1;
+        GCP = 2;
+        AZURE = 3;
+        MINIO = 4;
+        DB = 5;
+    }
+
     option (scalapb.message).extends = "ProtobufDomainObject";
     option (scalapb.message).extends = "GenericResource";
     required string uuid = 1;
@@ -32,4 +42,5 @@ message Resource {
     required string md5 = 5;
     optional string mimetype = 6;
     optional string uri = 7;
+    optional ProviderType providerType = 8 [default = LOCAL];
 }

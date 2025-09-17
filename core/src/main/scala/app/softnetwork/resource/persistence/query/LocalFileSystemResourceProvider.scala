@@ -29,7 +29,7 @@ protected[resource] trait LocalFileSystemResourceProvider
     uuid: String
   )(implicit m: Manifest[Resource], formats: Formats): Option[Resource] = {
     Try {
-      val path = Paths.get(rootDir, uuid)
+      val path = Paths.get(provider.rootDir, uuid)
       if (Files.exists(path)) {
         val fileAttributes =
           Files.readAttributes(path, classOf[BasicFileAttributes], LinkOption.NOFOLLOW_LINKS)
@@ -57,7 +57,7 @@ protected[resource] trait LocalFileSystemResourceProvider
     } match {
       case Success(s) => s
       case Failure(f) =>
-        log.error(f.getMessage, f)
+        provider.log.error(f.getMessage, f)
         None
     }
   }

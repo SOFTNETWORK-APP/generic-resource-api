@@ -10,10 +10,9 @@ import app.softnetwork.api.server._
 import app.softnetwork.resource.config.ResourceSettings
 import app.softnetwork.resource.handlers.GenericResourceHandler
 import app.softnetwork.resource.message.ResourceMessages._
+import app.softnetwork.resource.serialization.resourceFormats
 import com.softwaremill.session.CsrfDirectives._
 import com.softwaremill.session.CsrfOptions._
-import app.softnetwork.resource.spi._
-import app.softnetwork.serialization.commonFormats
 import app.softnetwork.session.config.Settings
 import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.{ServiceWithSessionDirectives, SessionMaterials}
@@ -31,11 +30,11 @@ trait ResourceService[SD <: SessionData with SessionDataDecorator[SD]]
     with ServiceWithSessionDirectives[ResourceCommand, ResourceResult, SD]
     with LoadResourceService
     with ApiRoute {
-  _: GenericResourceHandler with ResourceProvider with SessionMaterials[SD] =>
+  _: GenericResourceHandler with SessionMaterials[SD] =>
 
   implicit def serialization: Serialization.type = jackson.Serialization
 
-  implicit def formats: Formats = commonFormats
+  override implicit def formats: Formats = resourceFormats
 
   implicit def companion: SessionDataCompanion[SD]
 
@@ -59,7 +58,9 @@ trait ResourceService[SD <: SessionData with SessionDataDecorator[SD]]
     pathPrefix("library") {
       path(Segments(1, 128)) { segments =>
         get {
-          complete(HttpResponse(StatusCodes.OK, entity = listResources(segments.mkString("/"))))
+          complete(
+            HttpResponse(StatusCodes.OK, entity = provider.listResources(segments.mkString("/")))
+          )
         }
       }
     }

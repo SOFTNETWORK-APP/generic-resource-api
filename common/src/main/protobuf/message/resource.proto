@@ -24,14 +24,6 @@ message ResourceCreatedEvent {
     required app.softnetwork.resource.model.Resource document = 1;
 }
 
-message SessionResourceCreatedEvent {
-    option (scalapb.message).extends = "ProtobufEvent";
-    option (scalapb.message).extends = "SessionResourceEvent";
-    required string uuid = 1;
-    required string sessionId = 2;
-    optional string uri = 3;
-}
-
 message ResourceUpdatedEvent {
     option (scalapb.message).extends = "ProtobufEvent";
     option (scalapb.message).extends = "Updated[Resource]";
@@ -39,19 +31,20 @@ message ResourceUpdatedEvent {
     required app.softnetwork.resource.model.Resource document = 1;
 }
 
-message SessionResourceUpdatedEvent {
-    option (scalapb.message).extends = "ProtobufEvent";
-    option (scalapb.message).extends = "SessionResourceEvent";
-    required string uuid = 1;
-    required string sessionId = 2;
-    optional string uri = 3;
-}
-
 message ResourceDeletedEvent {
     option (scalapb.message).extends = "ProtobufEvent";
     option (scalapb.message).extends = "Deleted";
     option (scalapb.message).extends = "ResourceEvent";
     required string uuid = 1;
+}
+
+message SessionResourceUpsertedEvent {
+    option (scalapb.message).extends = "ProtobufEvent";
+    option (scalapb.message).extends = "SessionResourceEvent";
+    required string uuid = 1;
+    required string sessionId = 2;
+    required string content = 3;
+    optional string uri = 4;
 }
 
 message SessionResourceDeletedEvent {

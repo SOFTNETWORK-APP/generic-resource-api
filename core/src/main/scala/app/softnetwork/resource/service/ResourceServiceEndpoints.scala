@@ -7,12 +7,14 @@ import app.softnetwork.api.server.ApiErrors
 import app.softnetwork.resource.config.ResourceSettings
 import app.softnetwork.resource.handlers.GenericResourceHandler
 import app.softnetwork.resource.message.ResourceMessages._
-import app.softnetwork.resource.spi.{ResourceProvider, SimpleResource}
+import app.softnetwork.resource.serialization.resourceFormats
+import app.softnetwork.resource.spi.SimpleResource
 import app.softnetwork.session.config.Settings
 import app.softnetwork.session.model.{SessionData, SessionDataCompanion, SessionDataDecorator}
 import app.softnetwork.session.service.{ServiceWithSessionEndpoints, SessionMaterials}
 import com.softwaremill.session.SessionConfig
 import org.apache.tika.mime.MediaType
+import org.json4s.Formats
 import sttp.capabilities.akka.AkkaStreams
 import sttp.model.headers.CookieValueWithMeta
 import sttp.model.{HeaderNames, Method, Part, StatusCode}
@@ -25,13 +27,15 @@ import scala.concurrent.Future
 trait ResourceServiceEndpoints[SD <: SessionData with SessionDataDecorator[SD]]
     extends LoadResourceService
     with ServiceWithSessionEndpoints[ResourceCommand, ResourceResult, SD] {
-  _: GenericResourceHandler with ResourceProvider with SessionMaterials[SD] =>
+  _: GenericResourceHandler with SessionMaterials[SD] =>
 
   import app.softnetwork.serialization._
 
   implicit def sessionConfig: SessionConfig = Settings.Session.DefaultSessionConfig
 
   implicit def companion: SessionDataCompanion[SD]
+
+  override implicit def formats: Formats = resourceFormats
 
   override implicit def ts: ActorSystem[_] = system
 
@@ -62,7 +66,9 @@ trait ResourceServiceEndpoints[SD <: SessionData with SessionDataDecorator[SD]]
       .in("library")
       .in(paths)
       .out(jsonBody[List[SimpleResource]])
-      .serverLogicSuccess(_ => segments => Future.successful(listResources(segments.mkString("/"))))
+      .serverLogicSuccess(_ =>
+        segments => Future.successful(provider.listResources(segments.mkString("/")))
+      )
 
   def loadResourceBusinessLogic(segments: List[String]): Either[
     ApiErrors.ErrorInfo,

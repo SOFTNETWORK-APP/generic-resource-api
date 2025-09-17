@@ -85,20 +85,21 @@ sealed trait ResourceBehavior
       case cmd: CreateResource =>
         import cmd._
         val createdDate = Instant.now()
+        val resource =
+          asResource(uuid, bytes, uri)
+            .withCreatedDate(createdDate)
+            .withLastUpdated(createdDate)
         val sessionId = if (uuid.contains('#')) uuid.split('#').headOption else None
         val sessionEvent = sessionId.map(sid =>
-          SessionResourceCreatedEvent.defaultInstance
+          SessionResourceUpsertedEvent.defaultInstance
             .withUuid(uuid)
             .withSessionId(sid)
+            .withContent(resource.content)
             .copy(uri = uri)
         )
         Effect
           .persist(
-            ResourceCreatedEvent(
-              asResource(uuid, bytes, uri)
-                .withCreatedDate(createdDate)
-                .withLastUpdated(createdDate)
-            ) +: sessionEvent.toList
+            ResourceCreatedEvent(resource) +: sessionEvent.toList
           )
           .thenRun(_ => { ResourceCreated ~> replyTo })
 
@@ -111,20 +112,21 @@ sealed trait ResourceBehavior
             case None           => Instant.now()
           }
         }
+        val resource =
+          asResource(uuid, bytes, uri)
+            .withCreatedDate(createdDate)
+            .withLastUpdated(lastUpdated)
         val sessionId = if (uuid.contains('#')) uuid.split('#').headOption else None
         val sessionEvent = sessionId.map(sid =>
-          SessionResourceUpdatedEvent.defaultInstance
+          SessionResourceUpsertedEvent.defaultInstance
             .withUuid(uuid)
             .withSessionId(sid)
+            .withContent(resource.content)
             .copy(uri = uri)
         )
         Effect
           .persist(
-            ResourceUpdatedEvent(
-              asResource(uuid, bytes, uri)
-                .withCreatedDate(createdDate)
-                .withLastUpdated(lastUpdated)
-            ) +: sessionEvent.toList
+            ResourceUpdatedEvent(resource) +: sessionEvent.toList
           )
           .thenRun(_ => { ResourceUpdated ~> replyTo })
 
