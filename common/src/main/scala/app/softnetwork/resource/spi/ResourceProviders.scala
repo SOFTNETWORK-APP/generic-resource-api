@@ -17,19 +17,25 @@ object ResourceProviders {
   }
 
   def provider(providerType: ProviderType): ResourceProvider = {
-    resourceProviders.get(providerType.name) match {
+    val name = providerType.name.toLowerCase
+    resourceProviders.get(name) match {
       case Some(provider) => provider
       case None =>
-        resourceProviderFactories
-          .iterator()
-          .asScala
-          .find(_.providerType == providerType)
+        val factories = resourceProviderFactories.iterator().asScala
+        factories
+          .find(_.providerType.name.toLowerCase == name)
           .map { factory =>
             val provider = factory.provider
-            registerProvider(providerType.name, provider)
+            registerProvider(name, provider)
             provider
           }
-          .getOrElse(throw new Exception(s"No provider found for type ${providerType.name}"))
+          .getOrElse {
+            val providerTypeNames = factories.map(_.providerType.name.toLowerCase).toList
+            throw new Exception(
+              s"No provider found for type $name within available providers: [${providerTypeNames
+                .mkString(",")}]"
+            )
+          }
     }
   }
 }
