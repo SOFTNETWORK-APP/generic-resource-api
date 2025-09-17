@@ -1,8 +1,22 @@
 package app.softnetwork.resource.scalatest
 
+import akka.actor.typed.ActorSystem
 import app.softnetwork.persistence.scalatest.InMemoryPersistenceTestKit
 import app.softnetwork.resource.config.ResourceSettings
+import app.softnetwork.resource.handlers.ResourceDao
 import app.softnetwork.resource.launch.ResourceGuardian
+import app.softnetwork.resource.message.ResourceEvents.{
+  ResourceCreatedEvent,
+  ResourceDeletedEvent,
+  ResourceEvent,
+  ResourceUpdatedEvent
+}
+import app.softnetwork.resource.message.ResourceMessages.{
+  ResourceCreated,
+  ResourceDeleted,
+  ResourceLoaded,
+  ResourceUpdated
+}
 import app.softnetwork.resource.model.Resource.ProviderType
 import app.softnetwork.resource.model.GenericResource
 import app.softnetwork.resource.spi.{ResourceProvider, ResourceProviders}
@@ -20,5 +34,46 @@ trait ResourceTestKit[Resource <: GenericResource]
 
   def providerType: ProviderType
 
-  lazy val provider: ResourceProvider = ResourceProviders.provider(providerType)
+  lazy val resourceProvider: ResourceProvider = ResourceProviders.provider(providerType)
+
+  def resourceDao: ResourceDao = ResourceDao
+
+  def createResource(entityId: String, bytes: Array[Byte], uri: Option[String])(implicit
+    system: ActorSystem[_]
+  ): ResourceCreatedEvent = {
+    val probe = createTestProbe[ResourceEvent]()
+    subscribeProbe(probe)
+    resourceDao.createResource(entityId, bytes, uri) await {
+      case ResourceCreated => probe.expectMessageType[ResourceCreatedEvent]
+      case _               => fail(s"Resource $entityId not created")
+    }
+  }
+
+  def updateResource(entityId: String, bytes: Array[Byte], uri: Option[String])(implicit
+    system: ActorSystem[_]
+  ): ResourceUpdatedEvent = {
+    val probe = createTestProbe[ResourceEvent]()
+    subscribeProbe(probe)
+    resourceDao.updateResource(entityId, bytes, uri) await {
+      case ResourceUpdated => probe.expectMessageType[ResourceUpdatedEvent]
+      case _               => fail(s"Resource $entityId not updated")
+    }
+  }
+
+  def deleteResource(entityId: String)(implicit system: ActorSystem[_]): ResourceDeletedEvent = {
+    val probe = createTestProbe[ResourceEvent]()
+    subscribeProbe(probe)
+    resourceDao.deleteResource(entityId) await {
+      case ResourceDeleted => probe.expectMessageType[ResourceDeletedEvent]
+      case _               => fail(s"Resource $entityId not deleted")
+    }
+  }
+
+  def loadResource(entityId: String)(implicit system: ActorSystem[_]): Resource = {
+    resourceDao.loadResource(entityId) await {
+      case r: ResourceLoaded => r.resource.asInstanceOf[Resource]
+      case _                 => fail(s"Resource $entityId not found")
+    }
+  }
+
 }
