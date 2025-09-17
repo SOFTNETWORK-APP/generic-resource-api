@@ -184,6 +184,15 @@ sealed trait ResourceBehavior
       .withMd5(md5)
       .copy(mimetype = mimetype, uri = uri)
   }
+
+  override def handleEvent(state: Option[Resource], event: ResourceEvent)(implicit
+    context: ActorContext[_]
+  ): Option[Resource] = {
+    event match {
+      case _: SessionResourceEvent => state // do not handle session events here
+      case _                       => super.handleEvent(state, event)
+    }
+  }
 }
 
 object ResourceBehavior extends ResourceBehavior
